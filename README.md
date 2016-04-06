@@ -13,3 +13,6 @@ The target application area for this library has been primarily computer vision:
  - Self Driving Robot (Lego EV3)
 
    YouTube Video Demonstation: <https://www.youtube.com/watch?v=DCad82UdDFA> 
+
+
+[See Wiki documentation] (https://github.com/jfrancis71/CognitoNet/wiki)
