@@ -15,4 +15,4 @@ The target application area for this library has been primarily computer vision:
    YouTube Video Demonstation: <https://www.youtube.com/watch?v=DCad82UdDFA> 
 
 
-[See Wiki documentation] (https://github.com/jfrancis71/CognitoNet/wiki)
+[Wiki documentation] (https://github.com/jfrancis71/CognitoNet/wiki)
