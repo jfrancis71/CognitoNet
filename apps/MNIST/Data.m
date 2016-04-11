@@ -37,3 +37,6 @@ TestLabels = ReadMINSTLabelFile[$CNDataDir<>"\\MNIST\\t10k-labels-idx1-ubyte"];
 (* Converting to the 1 of K target format *)
 TrainingTargets = Map[ReplacePart[ConstantArray[0.,10],(#+1)->1.]&,TrainingLabels];
 TestTargets = Map[ReplacePart[ConstantArray[0.,10],(#+1)->1.]&,TestLabels];
+
+
+MNISTCategoryIndexToLabelMap = Table[t,{t,0,9}];
