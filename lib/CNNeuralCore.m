@@ -27,7 +27,7 @@ ForwardPropogate[inputs_List,network_]:=
 
 (* Note you should be cautious using this function applied to large datasets with
    a large and complex neural network. Memory usage may be excessive.
-   Consider using the partition'd version ForwardPropogate instead.
+   Consider using the partition'd version ForwardPropogate instead
 *)
 ForwardPropogateInternal[inputs_List,network_]:=
    Last[ForwardPropogateLayers[inputs,network]];
