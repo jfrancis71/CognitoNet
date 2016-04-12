@@ -6,3 +6,6 @@ CNAssertAbort[bool_,message_]:=
 
 
 CNImage[matrix_?MatrixQ]:=Graphics[Raster[matrix]];
+
+
+CNColImage[image_]:=Image[image,Interleaving->False]

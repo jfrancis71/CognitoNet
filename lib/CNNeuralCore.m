@@ -19,29 +19,32 @@ CNRead[netFile_String]:=(
    an excessive amount of memory otherwise. Functionally it is the same as calling
    ForwardPropogateInternal.
 *)
-ForwardPropogate::usage=
-   "ForwardPropogate[inputs,network] runs forward propogation on the inputs through the network.";
-ForwardPropogate[inputs_List,network_]:=
-   Flatten[Map[ForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
+CNForwardPropogate::usage=
+   "CNForwardPropogate[inputs,network] runs forward propogation on the inputs through the network.";
+CNForwardPropogate[inputs_List,network_]:=
+   Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
 
 
 (* Note you should be cautious using this function applied to large datasets with
    a large and complex neural network. Memory usage may be excessive.
    Consider using the partition'd version ForwardPropogate instead
 *)
-ForwardPropogateInternal[inputs_List,network_]:=
-   Last[ForwardPropogateLayers[inputs,network]];
+CNForwardPropogateInternal[inputs_List,network_]:=
+   Last[CNForwardPropogateLayers[inputs,network]];
 
 
-ForwardPropogateLayers[inputs_List,network_]:=
-   FoldList[ForwardPropogateLayer[#2,#1]&,inputs,network];
+CNForwardPropogateLayers[inputs_List,network_]:=
+   FoldList[CNForwardPropogateLayer[#2,#1]&,inputs,network];
 
 
 CNClassifyToIndex[inputs_List,network_List]:=
    Module[
-      {outputs=ForwardPropogate[inputs,network]},
-      Table[Position[outputs[[t]],Max[outputs[[t]]]][[1,1]],{t,1,Length[inputs]}]]
+      {outputs=CNForwardPropogate[inputs,network]},
+      Table[Position[outputs[[t]],Max[outputs[[t]]]][[1,1]],{t,1,Length[inputs]}]];
 
 
 CNClassify[inputs_List,network_List,categoryLabels_]:=
-   Map[categoryLabels[[#]]&,CNClassifyToIndex[inputs,network]]
+   Map[categoryLabels[[#]]&,CNClassifyToIndex[inputs,network]];
+
+
+CNDescription[network_]:=Map[CNLayerDescription,network];
