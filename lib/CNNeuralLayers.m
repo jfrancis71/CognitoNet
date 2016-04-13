@@ -1,8 +1,5 @@
 (* ::Package:: *)
 
-(* NOTE TO ME Should Transpose below be other way round? *)
-
-
 (*
    Layer: FullyConnected1DTo1D
 *)
@@ -12,7 +9,8 @@ CNForwardPropogateLayer[FullyConnected1DTo1D[layerBiases_List,layerWeights_?Matr
       "FullyConnected1DTo1D::Weight-Activation Error. Input length inconsistent with weight matrix."];
    CNAssertAbort[(layerBiases//Length)==(layerWeights//Length),
       "FullyConnected1DTo1D::Weight-Weight Error. Layer specification internally inconsistent."];
-   Transpose[layerWeights.Transpose[inputs] + layerBiases]
+   Transpose[layerWeights.Transpose[inputs] + layerBiases] (* Note rows in inputs correspond to examples,
+      and cols to neurons. + operator adds layerBiases columnwise to the matrix, hence these transposes. *)
 );
 
 
@@ -62,6 +60,14 @@ CNForwardPropogateLayer[ConvolveFilterBankToFilterBank[filters_],inputs_]:=Modul
    i3=Transpose[i2,{1,3,4,2}];
    Do[i3[[All,t]]=i3[[All,t]]+filters[[All,1]][[t]],{t,1,Length[i3[[1]]]}];i3
 ];
+
+
+(*
+   Layer: Logistic
+*)
+CNLogisticFn[inputs_]:=1./(1.+Exp[-inputs])
+SyntaxInformation[Logistic]={"ArgumentsPattern"->{}};
+CNForwardPropogateLayer[Logistic,inputs_]:=CNLogisticFn[inputs];
 
 
 (*
@@ -118,6 +124,13 @@ CNForwardPropogateLayer[PadFilterBank[padding_],inputs_]:=Map[ArrayPad[#,padding
 *)
 SyntaxInformation[SubsampleFilterBankToFilterBank]={"ArgumentsPattern"->{}};
 CNForwardPropogateLayer[SubsampleFilterBankToFilterBank,inputs_]:=Map[#[[1;;-1;;2,1;;-1;;2]]&,inputs,{2}];
+
+
+(*
+   Layer: PadFilter
+*)
+SyntaxInformation[PadFilter]={"ArgumentsPattern"->{_}};
+CNForwardPropogateLayer[PadFilter[padding_],inputs_]:=Map[ArrayPad[#,padding,.0]&,inputs];
 
 
 (*
