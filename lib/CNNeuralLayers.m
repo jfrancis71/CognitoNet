@@ -37,7 +37,7 @@ CNForwardPropogateLayer[Convolve2DToFilterBank[filters_],inputs_]:=(
    Layer: ConvolveFilterBankTo2D
 *)
 SyntaxInformation[ConvolveFilterBankTo2D]={"ArgumentsPattern"->{_,_}};
-ForwardPropogateLayer[ConvolveFilterBankTo2D[bias_,kernels_],inputs_]:=(
+CNForwardPropogateLayer[ConvolveFilterBankTo2D[bias_,kernels_],inputs_]:=(
    CNAssertAbort[Length[inputs[[1]]]==Length[kernels],
       "ConvolveFilterBankTo2D::#Kernels ("<>ToString[Length[kernels]]<>") not equal to #Features ("<>ToString[Length[inputs[[1]]]]<>") in input feature map"];
    bias+Sum[ListCorrelate[{kernels[[kernel]]},inputs[[All,kernel]]],
