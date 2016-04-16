@@ -11,9 +11,7 @@ The matrix is assumed to be in graphics order, i.e. row 1 of the matrix is the b
 CNImage[matrix_?MatrixQ]:=Graphics[Raster[matrix]];
 
 
-CNImageToCNImage::usage = "CNImageToCNImage[image,width] takes a Mathematica Image object
 and returns it in CNImage format (ie Raster row ordering) of specified image width";
-CNImageToCNImage[image_Image,width_Integer]:=
    ImageData[ColorConvert[ImageResize[image,width],"GrayScale"]]//Reverse
 
 
