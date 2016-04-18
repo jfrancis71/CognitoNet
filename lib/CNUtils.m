@@ -49,4 +49,4 @@ CNCameraMainLoop::usage = "CNCameraMainLoop[programF,width] evaluates and displa
 programF should be a function accepting a single argument which is the camera image in CNImage format.
 You should specify the width of the image that programF is expecting.";
 CNCameraMainLoop[programF_,width_] := 
-   Module[{grOutput},Monitor[While[True,grOutput=programF[CNImageToCNImage[CurrentImage[],width]]],grOutput]];
+   Module[{grOutput},Monitor[While[True,grOutput=programF[CNImport[CurrentImage[],width]]],grOutput]];
