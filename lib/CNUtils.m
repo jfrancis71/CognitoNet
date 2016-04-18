@@ -12,9 +12,20 @@ CNImage[matrix_?MatrixQ]:=Graphics[Raster[matrix]];
 
 
 CNImport::usage = "CNImport[image,width] takes a Mathematica Image object
-and returns it in CNImage format (ie Raster row ordering) of specified image width";
+and returns it in CNImage format (ie Raster row ordering) of specified image width.
+CNImport[image,{width,height}] takes a Mathematica Image object
+and returns it in CNImage format (ie Raster row ordering) of specified image width and height.
+CNImport[file,width] reads an image file in and returns it in CNImage format (ie Raster row ordering) of specified image width.
+CNImport[file,{width,height}] reads an image file in and returns it in CNImage format (ie Raster row ordering) of specified image width.
+";
 CNImport[image_Image,width_Integer]:=
    ImageData[ColorConvert[ImageResize[image,width],"GrayScale"]]//Reverse
+CNImport[image_Image,{width_Integer,height_Integer}]:=
+   ImageData[ColorConvert[ImageResize[image,{width,height}],"GrayScale"]]//Reverse
+CNImport[file_String,width_Integer]:=
+   CNImport[Import[file],width];
+CNImport[file_String,{width_Integer,height_Integer}]:=
+   CNImport[Import[file],{width,height}];
 
 
 CNColImage::usage = "CNColImage[data] will display image corresponding to data.
