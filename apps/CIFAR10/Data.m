@@ -33,4 +33,7 @@ TestLabels = CIFARReadFile[$CNDataDir<>"\\CIFAR10\\test_batch.bin"][[1]];
 TestImages = CIFARReadFile[$CNDataDir<>"\\CIFAR10\\test_batch.bin"][[2]];
 
 
-CIFAR10CategoryIndexToLabelMap = {"airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"};
+CIFAR10CategoryIndexToLabelMap = Table[k,{k,0,9}];
+
+
+CIFAR10CategoryIndexToTxtLabelMap = {"airplane","automobile","bird","cat","deer","dog","frog","horse","ship","truck"};
