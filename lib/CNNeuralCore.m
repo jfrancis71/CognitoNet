@@ -70,4 +70,20 @@ CNClassificationPerformance[inputs_,targetLabels_,net_,categoryMap_List]:=
 
 
 CNDescription::usage = "CNDescription[network] returns a description of the network.";
-CNDescription[network_]:=Map[CNLayerDescription,network];
+CNDescription[network_] := Column[{
+   Map[
+      CNLayerDescription[#]<>" with " <> ToString[CNLayerNumberParameters[#]] <> " parameter(s)"&,network]//MatrixForm,
+   "Total of " <> ToString[Total[Map[CNLayerNumberParameters,network]]] <> " parameters."
+   }];
+CNDescription[network_,input_] := Module[
+   {forward = Rest[CNForwardPropogateLayers[{input},network]]},df=forward;
+   Column[{
+   MapThread[
+      CNLayerDescription[#1]<>" with " <> 
+         ToString[CNLayerNumberParameters[#1]] <> " parameter(s) and " <> 
+         ToString[Length[Flatten[#2]]] <> " neurons"&,
+      {network,forward}]//MatrixForm,
+   "Total of " <> ToString[Total[Map[CNLayerNumberParameters,network]]] <> 
+      " parameters and " <> ToString[Length[Flatten[forward]]] <> 
+      " neurons."
+   }]];

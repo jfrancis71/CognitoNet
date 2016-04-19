@@ -12,6 +12,8 @@ CNForwardPropogateLayer[FullyConnected1DTo1D[layerBiases_List,layerWeights_?Matr
    Transpose[layerWeights.Transpose[inputs] + layerBiases] (* Note rows in inputs correspond to examples,
       and cols to neurons. + operator adds layerBiases columnwise to the matrix, hence these transposes. *)
 );
+CNLayerNumberParameters[FullyConnected1DTo1D[layerBiases_List,layerWeights_?MatrixQ]] :=
+   Length[Flatten[layerWeights]] + Length[layerBiases];
 
 
 (*
@@ -21,27 +23,33 @@ SyntaxInformation[Convolve2D]={"ArgumentsPattern"->{_,_}};
 CNForwardPropogateLayer[Convolve2D[layerBias_,layerKernel_],inputs_]:=(
    ListCorrelate[{layerKernel},inputs]+layerBias
 );
+CNLayerNumberParameters[Convolve2D[layerBias_,layerKernel_]] :=
+   Length[Flatten[layerKernel]] + 1;
 
 
 (*
    Layer: Convolve2DToFilterBank
 *)
 SyntaxInformation[Convolve2DToFilterBank]={"ArgumentsPattern"->{_}};
-CNForwardPropogateLayer[Convolve2DToFilterBank[filters_],inputs_]:=(
+CNForwardPropogateLayer[Convolve2DToFilterBank[filters_],inputs_] := (
    CNAssertAbort[(inputs[[1]]//Dimensions//Length)==2,"Convolve2DToFilterBank::inputs does not match 2D structure"];
    Transpose[Map[CNForwardPropogateLayer[#,inputs]&,filters],{2,1,3,4}]
 );
+CNLayerNumberParameters[Convolve2DToFilterBank[filters_]] :=
+   Total[Map[CNLayerNumberParameters,filters]];
 
 
 (*
    Layer: ConvolveFilterBankTo2D
 *)
 SyntaxInformation[ConvolveFilterBankTo2D]={"ArgumentsPattern"->{_,_}};
-CNForwardPropogateLayer[ConvolveFilterBankTo2D[bias_,kernels_],inputs_]:=(
+CNForwardPropogateLayer[ConvolveFilterBankTo2D[bias_,kernels_],inputs_] := (
    CNAssertAbort[Length[inputs[[1]]]==Length[kernels],
       "ConvolveFilterBankTo2D::#Kernels ("<>ToString[Length[kernels]]<>") not equal to #Features ("<>ToString[Length[inputs[[1]]]]<>") in input feature map"];
    bias+Sum[ListCorrelate[{kernels[[kernel]]},inputs[[All,kernel]]],
       {kernel,1,Length[kernels]}]);
+CNLayerNumberParameters[ConvolveFilterBankTo2D[bias_,kernels_]] :=
+   Length[Flatten[kernels]] + 1;
 
 
 (*
@@ -60,29 +68,33 @@ CNForwardPropogateLayer[ConvolveFilterBankToFilterBank[filters_],inputs_]:=Modul
    i3=Transpose[i2,{1,3,4,2}];
    Do[i3[[All,t]]=i3[[All,t]]+filters[[All,1]][[t]],{t,1,Length[i3[[1]]]}];i3
 ];
+CNLayerNumberParameters[ConvolveFilterBankToFilterBank[filters_]] :=
+   Total[Map[CNLayerNumberParameters,filters]]
 
 
 (*
    Layer: Logistic
 *)
-CNLogisticFn[inputs_]:=1./(1.+Exp[-inputs])
-SyntaxInformation[Logistic]={"ArgumentsPattern"->{}};
-CNForwardPropogateLayer[Logistic,inputs_]:=CNLogisticFn[inputs];
+CNLogisticFn[inputs_] := 1./(1.+Exp[-inputs])
+SyntaxInformation[Logistic] = {"ArgumentsPattern"->{}};
+CNForwardPropogateLayer[Logistic,inputs_] := CNLogisticFn[inputs];
+CNLayerNumberParameters[Logistic] := 0;
 
 
 (*
    Layer: Tanh
 *)
 CNForwardPropogateLayer[Tanh,inputs_]:=Tanh[inputs];
+CNLayerNumberParameters[Tanh] := 0;
 
 
 (*
    Layer: MaxPoolingFilterBankToFilterBank
 *)
 SyntaxInformation[MaxPoolingFilterBankToFilterBank]={"ArgumentsPattern"->{}};
-CNForwardPropogateLayer[MaxPoolingFilterBankToFilterBank,inputs_]:=
+CNForwardPropogateLayer[MaxPoolingFilterBankToFilterBank,inputs_] :=
    Map[Function[image,Map[Max,Partition[image,{2,2}],{2}]],inputs,{2}];
-
+CNLayerNumberParameters[MaxPoolingFilterBankToFilterBank] := 0;
 
 
 (*
@@ -91,13 +103,15 @@ CNForwardPropogateLayer[MaxPoolingFilterBankToFilterBank,inputs_]:=
 SyntaxInformation[MaxConvolveFilterBankToFilterBank]={"ArgumentsPattern"->{}};
 CNForwardPropogateLayer[MaxConvolveFilterBankToFilterBank,inputs_]:=
    Map[Max,Map[Partition[#,{3,3},{1,1},{-2,+2},-2.0]&,inputs,{2}],{4}];
+CNLayerNumberParameters[MaxConvolveFilterBankToFilterBank] := 0;
 
 
 (*
    Layer: Softmax
 *)
 SyntaxInformation[Softmax]={"ArgumentsPattern"->{}};
-CNForwardPropogateLayer[Softmax,inputs_]:=Map[Exp[#]/Total[Exp[#]]&,inputs];
+CNForwardPropogateLayer[Softmax,inputs_] := Map[Exp[#]/Total[Exp[#]]&,inputs];
+CNLayerNumberParameters[Softmax] := 0;
 
 
 (*
@@ -110,20 +124,23 @@ SyntaxInformation[Adaptor3DTo1D]={"ArgumentsPattern"->{_,_,_}};
 CNForwardPropogateLayer[Adaptor3DTo1D[features_,width_,height_],inputs_]:=(
    Map[Flatten,inputs]
 );
+CNLayerNumberParameters[Adaptor3DTo1D[features_,width_,height_]] := 0;
 
 
 (*
    Layer: PadFilterBank
 *)
-SyntaxInformation[PadFilterBank]={"ArgumentsPattern"->{_}};
-CNForwardPropogateLayer[PadFilterBank[padding_],inputs_]:=Map[ArrayPad[#,padding,.0]&,inputs,{2}]
+SyntaxInformation[PadFilterBank] = {"ArgumentsPattern"->{_}};
+CNForwardPropogateLayer[PadFilterBank[padding_],inputs_] := Map[ArrayPad[#,padding,.0]&,inputs,{2}];
+CNLayerNumberParameters[PadFilterBank[padding_]] := 0;
 
 
 (*
    Layer: SubsampleFilterBankToFilterBank
 *)
-SyntaxInformation[SubsampleFilterBankToFilterBank]={"ArgumentsPattern"->{}};
-CNForwardPropogateLayer[SubsampleFilterBankToFilterBank,inputs_]:=Map[#[[1;;-1;;2,1;;-1;;2]]&,inputs,{2}];
+SyntaxInformation[SubsampleFilterBankToFilterBank] = {"ArgumentsPattern"->{}};
+CNForwardPropogateLayer[SubsampleFilterBankToFilterBank,inputs_] := Map[#[[1;;-1;;2,1;;-1;;2]]&,inputs,{2}];
+CNLayerNumberParameters[SubsampleFilterBankToFilterBank] := 0;
 
 
 (*
@@ -131,6 +148,7 @@ CNForwardPropogateLayer[SubsampleFilterBankToFilterBank,inputs_]:=Map[#[[1;;-1;;
 *)
 SyntaxInformation[PadFilter]={"ArgumentsPattern"->{_}};
 CNForwardPropogateLayer[PadFilter[padding_],inputs_]:=Map[ArrayPad[#,padding,.0]&,inputs];
+CNLayerNumberParameters[PadFilter[padding_]] := 0;
 
 
 (*
@@ -144,6 +162,7 @@ Dropout[DropoutLayer[dims_,dropoutProb_],inputs_]:=
    DropoutLayerMask[Table[RandomInteger[],{Length[inputs]},dims]];
 CNForwardPropogateLayer[DropoutLayer[_,_],inputs_]:=0.5*inputs;
 CNForwardPropogateLayer[DropoutLayerMask[mask_],inputs_]:=inputs*mask;
+CNLayerNumberParameters[DropoutLayer[_,_]] := 0;
 
 
 (*
