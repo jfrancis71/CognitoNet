@@ -62,5 +62,12 @@ CNClassify[inputs_List,network_List,categoryLabels_]:=
    Map[categoryLabels[[#]]&,CNClassifyToIndex[inputs,network]];
 
 
+CNClassificationPerformance::usage = "
+CNClassificationPerformance[inputs,targetLabels,net,categoryMap]
+returns fraction of input examples labelled correctly.";
+CNClassificationPerformance[inputs_,targetLabels_,net_,categoryMap_List]:=
+   Total[Boole[MapThread[Equal,{CNClassify[inputs,net,categoryMap],targetLabels}]]]/Length[inputs]//N;
+
+
 CNDescription::usage = "CNDescription[network] returns a description of the network.";
 CNDescription[network_]:=Map[CNLayerDescription,network];
