@@ -10,12 +10,12 @@
 <<CNNeuralLayers.m
 
 
-CNRead::usage = "CNRead[\"file\"] reads in a pretrained file.\n
+CNRead::usage = "CNReadModel[\"file\"] reads in a pretrained file.\n
 It uses the $CNModelDir variable to determine the base directory to search from.
 The .wdx extension is assumed and should not be appended.\n
 It will write over the TrainingHistory,ValidationHistory,CurrentModel and LearningRate variables.
 ";
-CNRead[netFile_String]:=(
+CNReadModel[netFile_String]:=(
    {TrainingHistory,ValidationHistory,CurrentModel,LearningRate} = 
       Import[$CNModelDir<>netFile<>".wdx"];);
 
