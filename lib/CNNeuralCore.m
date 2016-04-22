@@ -10,7 +10,7 @@
 <<CNNeuralLayers.m
 
 
-CNRead::usage = "CNReadModel[\"file\"] reads in a pretrained file.\n
+CNReadModel::usage = "CNReadModel[\"file\"] reads in a pretrained file.\n
 It uses the $CNModelDir variable to determine the base directory to search from.
 The .wdx extension is assumed and should not be appended.\n
 It will write over the TrainingHistory,ValidationHistory,CurrentModel and LearningRate variables.
@@ -26,8 +26,28 @@ CNReadModel[netFile_String]:=(
 *)
 CNForwardPropogate::usage=
    "CNForwardPropogate[inputs,network] runs forward propogation on the inputs through the network.";
-CNForwardPropogate[inputs_List,network_]:=
+CNForwardPropogate[inputs_,network_]:=
    Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
+
+
+CNImageListQ[images_List] := ImageQ[images[[1]]]&&ImageChannels[images[[1]]]==1
+
+
+CNColImageListQ[images_List] := ImageQ[images[[1]]]&&ImageChannels[images[[1]]]==3
+
+
+(* STRICTLY TEMPORARY - TO BE REPLACED AS SOON AS NEW NETS TRAINED IN NEW FORMAT See Below*)
+CNForwardPropogate[images_?CNImageListQ,network_] :=
+   CNForwardPropogate[Map[Reverse[ImageData[#]]&,images],network];
+
+
+(* This line is ok though *)
+CNForwardPropogate[images_?CNColImageListQ,network_] :=
+   CNForwardPropogate[Map[ImageData[#,Interleaving->False]&,images],network];
+
+
+CNForwardPropogate[image_Image,network_] :=
+   CNForwardPropogate[ {If[ImageChannels[image] == 1,Reverse[ImageData[image]],ImageData[image,Interleaving->False] ]}, network ][[1]]
 
 
 (* Note you should be cautious using this function applied to large datasets with
@@ -52,6 +72,10 @@ CNClassifyToIndex[inputs_List,network_List]:=
    Module[
       {outputs=CNForwardPropogate[inputs,network]},
       Table[Position[outputs[[t]],Max[outputs[[t]]]][[1,1]],{t,1,Length[inputs]}]];
+CNClassifyToIndex[input_,network_List]:=
+   Module[
+      {outputs=CNForwardPropogate[input,network]},
+      Position[outputs,Max[outputs]][[1,1]]];
 
 
 CNClassify::usage = "CNClassify[inputs,network,categoryLabels]
@@ -60,6 +84,8 @@ The network is expected to output probabilities in a 1 of K format.
 Therefore categoryLabels should be a list of length K.";
 CNClassify[inputs_List,network_List,categoryLabels_]:=
    Map[categoryLabels[[#]]&,CNClassifyToIndex[inputs,network]];
+CNClassify[inputs_,network_List,categoryLabels_]:=
+   categoryLabels[[CNClassifyToIndex[inputs,network]]];
 
 
 CNClassificationPerformance::usage = "

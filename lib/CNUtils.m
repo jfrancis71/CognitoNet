@@ -23,9 +23,9 @@ CNImportImage[image_Image,width_Integer]:=
 CNImportImage[image_Image,{width_Integer,height_Integer}]:=
    ImageData[ColorConvert[ImageResize[image,{width,height}],"GrayScale"]]//Reverse
 CNImportImage[file_String,width_Integer]:=
-   CNImport[Import[file],width];
+   CNImportImage[Import[file],width];
 CNImportImage[file_String,{width_Integer,height_Integer}]:=
-   CNImport[Import[file],{width,height}];
+   CNImportImage[Import[file],{width,height}];
 
 
 CNColImage::usage = "CNColImage[data] will display image corresponding to data.
@@ -60,4 +60,4 @@ CNCameraMainLoop::usage = "CNCameraMainLoop[programF,width] evaluates and displa
 programF should be a function accepting a single argument which is the camera image in CNImage format.
 You should specify the width of the image that programF is expecting.";
 CNCameraMainLoop[programF_,width_] := 
-   Module[{grOutput},Monitor[While[True,grOutput=programF[CNImport[CurrentImage[],width]]],grOutput]];
+   Module[{grOutput},Monitor[While[True,grOutput=programF[CNImportImage[CurrentImage[],width]]],grOutput]];

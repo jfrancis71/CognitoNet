@@ -6,8 +6,8 @@
 (* Read in the pretrained models and save them with different names so they
    are not overwritten.
 *)
-CNRead["FaceNet\\FaceDetectionNet1"]; FaceNet = CurrentModel;
-CNRead["FaceNet\\GenderDetectionNet1"]; GenderNet = CurrentModel;
+CNReadModel["FaceNet\\FaceDetectionNet1"]; FaceNet = CurrentModel;
+CNReadModel["FaceNet\\GenderDetectionNet1"]; GenderNet = CurrentModel;
 
 
 CNFaceDetection::usage = "CNFaceDetection[mirror,spaces] performs face detection.

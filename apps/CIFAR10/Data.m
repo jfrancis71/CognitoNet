@@ -10,7 +10,7 @@
 
 CIFARReadFile[filename_String] := {
    Map[First,Partition[BinaryReadList[filename],3073]],
-   Map[Function[{flat},Partition[flat,32]],Map[Partition[#,1024]&,Map[Rest,Partition[BinaryReadList[filename],3073]]],{2}]/256.
+   Map[Image[#,Interleaving->False]&,Map[Function[{flat},Partition[flat,32]],Map[Partition[#,1024]&,Map[Rest,Partition[BinaryReadList[filename],3073]]],{2}]/256.]
 };
 
 

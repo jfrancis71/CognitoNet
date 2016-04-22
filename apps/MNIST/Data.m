@@ -28,8 +28,8 @@ ReadMINSTLabelFile[file_String] := Module[
    RawClassificationFileData[[9;;-1]]
 ];
 
-TrainingImages = ReadImagesFromMNISTFile[$CNDataDir<>"\\MNIST\\train-images-idx3-ubyte"];
-TestImages = ReadImagesFromMNISTFile[$CNDataDir<>"\\MNIST\\t10k-images-idx3-ubyte"];
+TrainingImages = Map[Image[#//Reverse]&,ReadImagesFromMNISTFile[$CNDataDir<>"\\MNIST\\train-images-idx3-ubyte"]];
+TestImages = Map[Image[#//Reverse]&,ReadImagesFromMNISTFile[$CNDataDir<>"\\MNIST\\t10k-images-idx3-ubyte"]];
 
 TrainingLabels = ReadMINSTLabelFile[$CNDataDir<>"\\MNIST\\train-labels-idx1-ubyte"];
 TestLabels = ReadMINSTLabelFile[$CNDataDir<>"\\MNIST\\t10k-labels-idx1-ubyte"];
