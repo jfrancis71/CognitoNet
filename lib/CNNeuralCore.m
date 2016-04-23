@@ -20,20 +20,28 @@ CNReadModel[netFile_String]:=(
       Import[$CNModelDir<>netFile<>".wdx"];);
 
 
-(* We partition at this point, as on some large datasets and networks we will use
-   an excessive amount of memory otherwise. Functionally it is the same as calling
-   ForwardPropogateInternal.
-*)
-CNForwardPropogate::usage=
-   "CNForwardPropogate[inputs,network] runs forward propogation on the inputs through the network.";
-CNForwardPropogate[inputs_,network_]:=
-   Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
+CNImageQ[image_] := ImageQ[image]&&ImageChannels[image]==1;
+
+
+CNColImageQ[image_] := ImageQ[image]&&ImageChannels[image]==3;
 
 
 CNImageListQ[images_List] := ImageQ[images[[1]]]&&ImageChannels[images[[1]]]==1
 
 
 CNColImageListQ[images_List] := ImageQ[images[[1]]]&&ImageChannels[images[[1]]]==3
+
+
+(* We partition at this point, as on some large datasets and networks we will use
+   an excessive amount of memory otherwise. Functionally it is the same as calling
+   ForwardPropogateInternal.
+*)
+CNForwardPropogate::usage=
+   "CNForwardPropogate[inputs,network] runs forward propogation on the inputs through the network.
+CNForwardPropogate[image,network] runs forward propogation on the image through the network.
+CNForwardPropogate[images,network] runs forward propogation on the images through the network.";
+CNForwardPropogate[inputs_,network_]:=
+   Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
 
 
 (* STRICTLY TEMPORARY - TO BE REPLACED AS SOON AS NEW NETS TRAINED IN NEW FORMAT See Below*)
@@ -46,8 +54,12 @@ CNForwardPropogate[images_?CNColImageListQ,network_] :=
    CNForwardPropogate[Map[ImageData[#,Interleaving->False]&,images],network];
 
 
-CNForwardPropogate[image_Image,network_] :=
-   CNForwardPropogate[ {If[ImageChannels[image] == 1,Reverse[ImageData[image]],ImageData[image,Interleaving->False] ]}, network ][[1]]
+CNForwardPropogate[image_?CNImageQ,network_] :=
+   CNForwardPropogate[ {Reverse[ImageData[image]]}, network ][[1]];
+
+
+CNForwardPropogate[image_?CNColImage,network_] :=
+   CNForwardPropogate[ {ImageData[image,Interleaving->False]}, network ][[1]];
 
 
 (* Note you should be cautious using this function applied to large datasets with
