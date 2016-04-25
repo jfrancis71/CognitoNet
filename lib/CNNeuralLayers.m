@@ -89,6 +89,13 @@ CNLayerNumberParameters[Tanh] := 0;
 
 
 (*
+   Layer: ReLU
+*)
+SyntaxInformation[ReLU]={"ArgumentsPattern"->{}};
+CNForwardPropogateLayer[ReLU,inputs_]:=UnitStep[inputs-0]*inputs;
+
+
+(*
    Layer: MaxPoolingFilterBankToFilterBank
 *)
 SyntaxInformation[MaxPoolingFilterBankToFilterBank]={"ArgumentsPattern"->{}};
@@ -115,12 +122,18 @@ CNLayerNumberParameters[Softmax] := 0;
 
 
 (*
-   Layer: Adaptor3DTo1D
+   Layer: AdaptorFilterBankTo1D
 *)
 (* Helper Function sources from Mathematica on-line documentation regarding example use of Partition *)
 unflatten[e_,{d__?((IntegerQ[#]&&Positive[#])&)}]:= 
    Fold[Partition,e,Take[{d},{-1,2,-1}]] /;(Length[e]===Times[d]);
-SyntaxInformation[Adaptor3DTo1D]={"ArgumentsPattern"->{_,_,_}};
+SyntaxInformation[AdaptorFilterBankTo1D]={"ArgumentsPattern"->{_,_,_}};
+CNForwardPropogateLayer[AdaptorFilterBankTo1D[features_,width_,height_],inputs_]:=(
+   Map[Flatten,inputs]
+);
+CNLayerNumberParameters[AdaptorFilterBankTo1D[features_,width_,height_]] := 0;
+
+(* Deprecated *)
 CNForwardPropogateLayer[Adaptor3DTo1D[features_,width_,height_],inputs_]:=(
    Map[Flatten,inputs]
 );
