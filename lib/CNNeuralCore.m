@@ -58,7 +58,7 @@ CNForwardPropogate[image_?CNImageQ,network_] :=
    CNForwardPropogate[ {Reverse[ImageData[image]]}, network ][[1]];
 
 
-CNForwardPropogate[image_?CNColImage,network_] :=
+CNForwardPropogate[image_?CNColImageQ,network_] :=
    CNForwardPropogate[ {ImageData[image,Interleaving->False]}, network ][[1]];
 
 
