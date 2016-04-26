@@ -14,7 +14,7 @@ CNImage[matrix_?MatrixQ]:=Graphics[Raster[matrix]];
 *)
 
 
-CNImportImage::usage = "CNImport[image,width] takes a Mathematica Image object
+CNImportImage::usage = "CNImportImage[image,width] takes a Mathematica Image object
 and returns a grayscale image.
 CNImportImage[image,{width,height}] takes a Mathematica Image object
 and returns a grayscale image of specified image width and height.
@@ -30,6 +30,14 @@ CNImportImage[file_String,width_Integer]:=
    CNImportImage[Import[file],width];
 CNImportImage[file_String,{width_Integer,height_Integer}]:=
    CNImportImage[Import[file],{width,height}];
+
+
+CNMovieLength[file_String] := Import[file]//Length;
+CNImportMovie[file_String,width_Integer] :=
+   CNImportMovie[file,width, CNMovieLength[file]];
+CNImportMovie[file_String,width_Integer,frames_Integer] :=
+   Flatten[Map[
+      Map[Function[conv,CNImportImage[conv,width]],Import[file,{"Frames",#}]]&,Partition[Range[frames],10,10,1,{}]],1];
 
 
 (*
