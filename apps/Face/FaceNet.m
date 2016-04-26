@@ -37,7 +37,7 @@ CNFaceWithGenderDetection[mirror_,spaces_] :=
    CNFaceDetection[mirror,spaces,Function[image,Blend[{Pink,Blue},CNForwardPropogate[{image},GenderNet][[1,1]]]]]
 
 
-CNGetPatch[image_,coords_]:=image[[coords[[2]]-16;;coords[[2]]+15,coords[[1]]-16;;coords[[1]]+15]]
+CNGetPatch[image_,coords_] := Image[ImageData[image,DataReversed->True][[coords[[2]]-16;;coords[[2]]+15,coords[[1]]-16;;coords[[1]]+15]]//Reverse]
 
 
 (*
@@ -52,33 +52,33 @@ CNGetPatch[image_,coords_]:=image[[coords[[2]]-16;;coords[[2]]+15,coords[[1]]-16
    1/301 factor might arguably (depending on assumptions) be expected to vary with the size of the image. In practice this has been found to work
    quite well with images sizes up to 640.
 *)
-CNFaceLocalizationConvolve::usage = "CNFaceLocalizationConvolve[cnimage, colorStyleF] draws bounding boxes around faces found within the image
+CNFaceLocalizationConvolve::usage = "CNFaceLocalizationConvolve[image, colorStyleF] draws bounding boxes around faces found within the image
 using FaceNet neural network. The faces are assumed to fit within a 32*32 sliding window.";
-CNFaceLocalizationConvolve[image_?MatrixQ,colorStyleF_] := (
+CNFaceLocalizationConvolve[image_?CNImageQ,colorStyleF_] := (
    HackedFaceNetConvolve1 = Append[
       Delete[FaceNet,{{1},{5},{9}}][[1;;9]],
       ConvolveFilterBankTo2D[0.,unflatten[FaceNet[[-2,2,1]],{64,4,4}]]];
-   facemap = CNLogisticFn[-7.503736 + CNForwardPropogate[{image},HackedFaceNetConvolve1]][[1]];
+   facemap = CNLogisticFn[-7.503736 + CNForwardPropogate[image,HackedFaceNetConvolve1]];
    extractFacePositions = Position[facemap,q_/;q>.5];
    originalCoordsFacePositions = Map[(({#[[2]],#[[1]]}-{1,1})*8+{14,14} + {16,16})&,extractFacePositions];
-   filteredFacePositions = Select[originalCoordsFacePositions,CNPriorAdjustment[0.5,1./301,CNForwardPropogate[{CNGetPatch[image,#]},FaceNet][[1,1]]]>.5&];
+   filteredFacePositions = Select[originalCoordsFacePositions,CNPriorAdjustment[0.5,1./301,CNForwardPropogate[CNGetPatch[image,#],FaceNet][[1]]]>.5&];
    Map[CNOutlineGraphics[CNBoundingRectangles[{#},{16,16}],colorStyleF[CNGetPatch[image,#]]]&,filteredFacePositions]
 );
 
 
-CNFaceLocalization::usage = "CNFaceLocalization[cnimage,colorStyleF] searches for faces within the image and draws boxes around them.
+CNFaceLocalization::usage = "CNFaceLocalization[image,colorStyleF] searches for faces within the image and draws boxes around them.
 It searches at multiple scales, and the color can be changed by passing in a ColorStyle function (which receives a 32*32 window as an argument).";
-CNFaceLocalization[image_?MatrixQ,colorStyleF_:Function[{patch},Green]] := (
-   Show[image//CNImage,
-      Table[CNRescaleGraphics[CNFaceLocalizationConvolve[#,colorStyleF]&,image,.8^sc],{sc,0,-3+(Log[32]-Log[Min[Dimensions[image]]])/Log[.8]}]
+CNFaceLocalization[image_?CNImageQ,colorStyleF_:Function[{patch},Green]] := (
+   Show[image,
+      Table[CNRescaleGraphics[CNFaceLocalizationConvolve[#,colorStyleF]&,image,.8^sc],{sc,0,-3+(Log[32]-Log[Min[ImageDimensions[image]]])/Log[.8]}]
    (* Slight hack with -3 factor above. Ideally fixup CNFaceLocalizationConvolve so it can handle 32*32 inputs *)
    ]
 );
 
 
 CNFaceWithGenderLocalization::usage = "CNFaceWithGenderLocalization[cnimage] searches for faces at multipe scales within the image and attempts gender recognition.";
-CNFaceWithGenderLocalization[image_?MatrixQ] :=
-   CNFaceLocalization[image,Function[{patch},Blend[{Pink,Blue},CNForwardPropogate[{patch},GenderNet][[1,1]]]]]
+CNFaceWithGenderLocalization[image_?CNImageQ] :=
+   CNFaceLocalization[image,Function[{patch},Blend[{Pink,Blue},CNForwardPropogate[patch,GenderNet][[1]]]]]
 
 
 (*
