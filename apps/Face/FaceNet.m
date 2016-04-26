@@ -21,12 +21,12 @@ Responsivess is strongest for full face in crop'd image, ie chin near bottom of 
 CNFaceDetection[mirror_,spaces_,chartStyleF_:Function[patch,Green]] :=
    Module[{cropImage},
       CNCameraMainLoop[(
-         cropImage=Map[Reverse,#[[24-15;;24+16,32-15;;32+16]]];
+         cropImage=Map[Reverse,ImageData[#,DataReversed->True][[24-15;;24+16,32-15;;32+16]]];
          If[mirror==False,cropImage=Map[Reverse,cropImage]];
          {
             StringJoin[ConstantArray[" ",spaces]],
             BarChart[CNForwardPropogate[{cropImage},FaceNet],PlotRange->{0,1},ChartStyle->chartStyleF[cropImage]],
-            cropImage//CNImage})&
+            cropImage//Raster//Graphics})&
       ,64]
    ]
 

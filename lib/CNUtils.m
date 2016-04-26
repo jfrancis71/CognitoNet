@@ -40,17 +40,14 @@ CNColImage[image_]:=Image[image,Interleaving->False]
 *)
 
 
-(*
-Deprecated
 CNImageRescale::usage = "CNImageRescale[image_,scale_] rescales image by scale factor.";
-CNImageRescale[image_,scale_] :=
-   ImageData[ImageResize[Image[image],scale*Length[image[[1]]]]]
-*)
+CNImageRescale[image_Image,scale_] :=
+   ImageResize[image,scale*ImageDimensions[image][[1]]]
 
 
 CNRescaleGraphics::usage = "CNRescaleGraphics[f,image,scale] will rescale image and pass it into function f
 which is expected to produce a list of Graphics objects and then rescale back this output.";
-CNRescaleGraphics[f_Function,image_?MatrixQ,scale_?NumberQ] :=
+CNRescaleGraphics[f_Function,image_Image,scale_?NumberQ] :=
    Graphics[Map[Scale[#[[1]],1/scale,{0,0}]&,f[CNImageRescale[image,scale]]]];
 
 
