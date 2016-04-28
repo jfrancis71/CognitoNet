@@ -18,14 +18,13 @@ The main application area so far is computer vision. In principle it could be of
 
 Example neural nets include:
 
- - MNIST
- - CIFAR-10
- - FaceScrub (Face and gender recognition)
+ - [MNIST](https://github.com/jfrancis71/CognitoNet/wiki/MNIST)
+ - [CIFAR-10](https://github.com/jfrancis71/CognitoNet/wiki/CIFAR-10-Example)
+ - [FaceNet](https://github.com/jfrancis71/CognitoNet/wiki/Face-Detection) (Face and gender recognition)
  
     YouTube Video Demonstation: <https://www.youtube.com/watch?v=TdRtUnSppB0>
  - Self Driving Robot (Lego EV3)
 
    YouTube Video Demonstation: <https://www.youtube.com/watch?v=DCad82UdDFA> 
-
 
 [Wiki documentation] (https://github.com/jfrancis71/CognitoNet/wiki)
