@@ -2,9 +2,19 @@
 
 CognitoNet is a Mathematica implementation of Convolutional Neural Nets.
 
-The objective of the project is to provide a modular framework to make it easy to experiment with different neural network architectures and to easily implement new neural layer types if desired. An additional goal is to use the Mathematica environment to explore the networks to help gain some insight into how they function.
+Objectives of the project are to make neural networks:
 
-The main application area so far is computer vision. In principle it could be of use in any other area where a feed forward neural network is applicable. It is a CPU based implementation, so is probably not suitable for ImageNet scale image sizes and datasets. As it is designed for experimentation, users who just want a good face recognizer are probably better off with the built-in Mathematica face recognition functions.
+ - Accessible
+ - Interactive
+ - Flexible
+ - Extensible
+ - Efficient
+
+in descending order of priority.
+
+The package extends the machine learning capabilities of Mathematica (introduced in version 10) to multi layer convolutional nets. The package has been influenced by other popular machine learning systems, including Caffe and Torch, and Alex Krizhevsky's Convnet. However, it differs from these packages in that by using Mathematica it supports a highly interactive environment facilitating experimentation. It also has an unusually small code base (around 500 lines). Although other GPU based machine learning systems are faster, it is an objective that it should be sufficiently efficient to solve interesting and challenging problems such as CIFAR-10 and face detection.
+
+The main application area so far is computer vision. In principle it could be of use in any other area where a feed forward neural network is applicable.
 
 Example neural nets include:
 
