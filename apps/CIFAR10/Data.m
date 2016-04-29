@@ -33,6 +33,10 @@ TestLabels = CIFARReadFile[$CNDataDir<>"\\CIFAR10\\test_batch.bin"][[1]];
 TestImages = CIFARReadFile[$CNDataDir<>"\\CIFAR10\\test_batch.bin"][[2]];
 
 
+TrainingSet = MapThread[(#1->#2)&,{TrainingImages,TrainingLabels}];
+TestSet = MapThread[(#1->#2)&,{TestImages,TestLabels}];
+
+
 CIFAR10CategoryIndexToLabelMap = Table[k,{k,0,9}];
 
 

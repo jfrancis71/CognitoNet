@@ -39,4 +39,8 @@ TrainingTargets = Map[ReplacePart[ConstantArray[0.,10],(#+1)->1.]&,TrainingLabel
 TestTargets = Map[ReplacePart[ConstantArray[0.,10],(#+1)->1.]&,TestLabels];
 
 
+TrainingSet = MapThread[(#1->#2)&,{TrainingImages,TrainingLabels}];
+TestSet = MapThread[(#1->#2)&,{TestImages,TestLabels}];
+
+
 MNISTCategoryIndexToLabelMap = Table[t,{t,0,9}];

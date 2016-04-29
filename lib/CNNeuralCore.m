@@ -102,9 +102,14 @@ CNClassify[inputs_,network_List,categoryLabels_]:=
 
 CNClassificationPerformance::usage = "
 CNClassificationPerformance[inputs,targetLabels,net,categoryMap]
-returns fraction of input examples labelled correctly.";
+returns fraction of input examples labelled correctly.
+CNClassificationPerformance[testSet,net,categoryMap]
+returns fraction of test set labelled correctly.
+";
 CNClassificationPerformance[inputs_,targetLabels_,net_,categoryMap_List]:=
    Total[Boole[MapThread[Equal,{CNClassify[inputs,net,categoryMap],targetLabels}]]]/Length[inputs]//N;
+CNClassificationPerformance[testSet_,net_,categoryMap_List]:=
+   Total[Boole[MapThread[Equal,{CNClassify[testSet[[All,1]],net,categoryMap],testSet[[All,2]]}]]]/Length[testSet]//N;
 
 
 CNDescription::usage = "CNDescription[network] returns a description of the network.";
