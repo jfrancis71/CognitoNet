@@ -98,6 +98,6 @@ Options[CNGradientDescent]={
    MomentumDecay->.0,
    MomentumType->"CM",
    StepSize->.01};
-CNGradientDescent::usage = "NGradientDescent[state_, gradF_, plusF_, iterations_, opts] performs gradient descent."];
+CNGradientDescent::usage = "NGradientDescent[state_, gradF_, plusF_, iterations_, opts] performs gradient descent.";
 CNGradientDescent[state_,gradF_,plusF_,iterations_,opts:OptionsPattern[]] :=
    First[Nest[CNStepGradientDescent[#,gradF,plusF,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[StepSize]]&,{state,0.0},iterations]]
