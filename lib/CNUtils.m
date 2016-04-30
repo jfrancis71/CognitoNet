@@ -76,3 +76,28 @@ programF should be a function accepting a single argument which is the camera im
 You should specify the width of the image that programF is expecting.";
 CNCameraMainLoop[programF_,width_] := 
    Module[{grOutput},Monitor[While[True,grOutput=programF[CNImportImage[CurrentImage[],width]]],grOutput]];
+
+
+(* http://www.cs.toronto.edu/~fritz/absps/momentum.pdf *)
+(* On the importance of initialization and momentum in deep learning *)
+(* Sutskever, Martens, Dahl, Hinton (2013) *)
+CNStepGradientDescent[ {state_, velocity_}, gradF_, plusF_, momentumDecay_, momentumType_, stepSize_ ]:=(
+   gw=If[momentumType!="Nesterov",
+      gradF[state],
+      gradF[plusF[state,momentumDecay*velocity]]
+   ];
+   newvelocity = (momentumDecay * velocity) - (gw * stepSize);
+   {plusF[state, newvelocity], newvelocity}
+)
+
+
+SyntaxInformation[MomentumDecay]={"ArgumentsPattern"->{}};
+SyntaxInformation[MomentumType]={"ArgumentsPattern"->{}};
+SyntaxInformation[StepSize]={"ArgumentsPattern"->{}};
+Options[CNGradientDescent]={
+   MomentumDecay->.0,
+   MomentumType->"CM",
+   StepSize->.01};
+CNGradientDescent::usage = "NGradientDescent[state_, gradF_, plusF_, iterations_, opts] performs gradient descent."];
+CNGradientDescent[state_,gradF_,plusF_,iterations_,opts:OptionsPattern[]] :=
+   First[Nest[CNStepGradientDescent[#,gradF,plusF,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[StepSize]]&,{state,0.0},iterations]]
