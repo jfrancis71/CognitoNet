@@ -67,18 +67,16 @@ CNForwardPropogate[inputs_,network_]:=
    Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
 
 
-(* STRICTLY TEMPORARY - TO BE REPLACED AS SOON AS NEW NETS TRAINED IN NEW FORMAT See Below*)
 CNForwardPropogate[images_?CNImageListQ,network_] :=
-   CNForwardPropogate[Map[Reverse[ImageData[#]]&,images],network];
+   CNForwardPropogate[Map[ImageData[#]&,images],network];
 
 
-(* This line is ok though *)
 CNForwardPropogate[images_?CNColImageListQ,network_] :=
    CNForwardPropogate[Map[ImageData[#,Interleaving->False]&,images],network];
 
 
 CNForwardPropogate[image_?CNImageQ,network_] :=
-   CNForwardPropogate[ {Reverse[ImageData[image]]}, network ][[1]];
+   CNForwardPropogate[ {ImageData[image]}, network ][[1]];
 
 
 CNForwardPropogate[image_?CNColImageQ,network_] :=
@@ -270,22 +268,22 @@ Options are:
    MomentumDecay->0
    MomentumType->None
 ";
-Options[CNMiniBatchTrainModel]={
+Options[CNMiniBatchTrainModelInternal]={
    MaxEpoch->10,
    LearningRate->.01,
    MomentumDecay->.0,
    MomentumType->"None",
    ValidationSet->{},
    EpochMonitor:>(#&)};
-CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Module[{grOutput={}},
+CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Module[{grOutput={}},
    TrainingHistory = {};ValidationHistory={};CurrentLearningRate=OptionValue[LearningRate];
    grOutput=0;
    partialTrainingLoss = Null; Print[" Batch Training Loss: ",Dynamic[partialTrainingLoss ]];
    Print[Dynamic[grOutput]];
    (* Last term below needed to ensure velocity has the right structure *)
-   {state,velocity} = { model, CNGrad[ XORInit, trainingSet[[1;;1,1]], trainingSet[[1;;1,2]], CNRegressionLoss1D ]*0.0 };
+   {state,velocity} = { model, CNGrad[ model, trainingSet[[1;;1,1]], trainingSet[[1;;1,2]], CNRegressionLoss1D ]*0.0 };
    For[epoch=1,epoch<OptionValue[MaxEpoch],epoch++,
-      { state, velocity } = CNMiniBatchTrainForOneEpoch[ {state, velocity}, trainingSet, lossF, FilterRules[opts,Options[CNMiniBatchTrainForOneEpoch]] ];
+      { state, velocity } = CNMiniBatchTrainForOneEpoch[ {state, velocity}, trainingSet, lossF, FilterRules[{opts},Options[CNMiniBatchTrainForOneEpoch]] ];
       CurrentModel = state;
       AppendTo[TrainingHistory,lossF[ state, trainingSet ] ];
       If[Length[OptionValue[ValidationSet]]>0,
@@ -297,6 +295,41 @@ CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Modul
    ];
 ];
 
+Options[CNMiniBatchTrainModel]={
+   MaxEpoch->10,
+   LearningRate->.01,
+   MomentumDecay->.0,
+   MomentumType->"None",
+   ValidationSet->{},
+   EpochMonitor:>(#&)};
+CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
+   Which[
+      CNImageQ[trainingSet[[1,1]]], CNMiniBatchTrainModelInternal[ model, Map[ImageData[#[[1]]]->#[[2]]&, trainingSet], lossF, opts ],
+      CNColImageQ[trainingSet[[1,1]]], CNMiniBatchTrainModelInternal[ model, Map[ImageData[#[[1]],Interleaving->False]->#[[2]]&,trainingSet], lossF, opts ],
+      True, CNMiniBatchTrainModelInternal[ model, trainingSet, lossF, opts ]
+   ];
+
+
+CNConvertTargetsTo1OfKRepresentation[targets_,categoryList_]:=
+   Map[
+      ReplacePart[ConstantArray[0,Length[categoryList]],Position[categoryList,#][[1,1]]->1]&,targets];
+
+
+CNConvertTrainingSetTo1OfKRepresentation[trainingSet_,categoryList_]:=
+   Map[#[[1]]->
+      ReplacePart[ConstantArray[0,Length[categoryList]],Position[categoryList,#[[2]]][[1,1]]->1]&,trainingSet];
+
+
+Options[CNMiniBatchTrainCategoricalModel]={
+   MaxEpoch->10,
+   LearningRate->.01,
+   MomentumDecay->.0,
+   MomentumType->"None",
+   ValidationSet->{},
+   EpochMonitor:>(#&)};
+CNMiniBatchTrainCategoricalModel[model_,trainingSet_,lossF_, categoryList_, opts:OptionsPattern[]] :=
+   CNMiniBatchTrainModel[ model, CNConvertTrainingSetTo1OfKRepresentation[trainingSet, categoryList], lossF, opts ]
+
 
 (* Loss Functions *)
 
@@ -304,6 +337,7 @@ CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Modul
 CNDeltaLoss[CNRegressionLoss,outputs_,targets_]:=2.0*(outputs-targets)/Length[outputs];
 CNDeltaLoss[CNRegressionLoss1D,outputs_,targets_]:=2.0*(outputs-targets)/Length[outputs];
 CNDeltaLoss[CNCrossEntropyLoss,outputs_,targets_]:=-((-(1-targets)/(1-outputs)) + (targets/outputs))/Length[outputs];
+CNDeltaLoss[CNClassificationLoss,outputs_,targets_]:=-targets*(1.0/outputs)/Length[outputs];
 
 
 CNRegressionLoss[model_,testSet_] :=
@@ -312,3 +346,4 @@ CNRegressionLoss1D[model_,testSet_] :=
    (outputs=CNForwardPropogate[testSet[[All,1]],model];CNAssertAbort[Dimensions[outputs]==Dimensions[testSet[[All,2]]],"Loss1D::Mismatched Targets and Outputs"];Total[(outputs-testSet[[All,2]])^2,2]/Length[testSet]);
 CNCrossEntropyLoss[model_,testSet_]:=
    Module[{output=CNForwardPropogate[testSet[[All,1]],model]},re=output;-Total[testSet[[All,2]]*Log[output]+(1-testSet[[All,2]])*Log[1-output],2]/Length[testSet]];
+CNClassificationLoss[parameters_,testSet_]:=-Total[Log[Extract[CNForwardPropogate[testSet[[All,1]],parameters],Position[testSet[[All,2]],1]]]]/Length[testSet];
