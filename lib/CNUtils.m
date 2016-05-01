@@ -6,6 +6,10 @@ CNAssertAbort[bool_,message_]:=
       Print[message];Abort[]];
 
 
+CNTimer[message_,expr_]:=Module[{timer=AbsoluteTiming[expr]},If[MatchQ[$timers,True],Print[message," ",timer[[1]]," secs"]];timer[[2]]];
+SetAttributes[CNTimer,HoldAll];
+
+
 (*
 Deprecated
 CNImage::usage = "CNImage[matrix] assumes matrix represents an image structure and displays it.
@@ -97,7 +101,11 @@ SyntaxInformation[StepSize]={"ArgumentsPattern"->{}};
 Options[CNGradientDescent]={
    MomentumDecay->.0,
    MomentumType->"CM",
-   StepSize->.01};
+   StepSize->.01,
+   StepMonitor:>(#&)};
 CNGradientDescent::usage = "NGradientDescent[state_, gradF_, plusF_, iterations_, opts] performs gradient descent.";
 CNGradientDescent[state_,gradF_,plusF_,iterations_,opts:OptionsPattern[]] :=
-   First[Nest[CNStepGradientDescent[#,gradF,plusF,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[StepSize]]&,{state,0.0},iterations]]
+   First[Nest[
+      (updateStep=CNStepGradientDescent[#,gradF,plusF,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[StepSize]];OptionValue[StepMonitor][First[updateStep]];updateStep)&,
+      {state,gradF[state]*0.0}, (* needed as if velocity has complex structure it will be otherwise initialized incorrectly *)
+      iterations]]
