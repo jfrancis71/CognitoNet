@@ -221,7 +221,7 @@ Options are:
    MomentumDecay->0
    MomentumType->None
 ";
-SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{}_};
+SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{_}};
 SyntaxInformation[LearningRate]={"ArgumentsPattern"->{_}};
 SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
 Options[CNTrainModel]={
@@ -245,6 +245,57 @@ CNTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Module[{grOutp
          StepMonitor:>Function[currentState,CurrentModel=currentState;AppendTo[TrainingHistory,lossF[currentState,trainingSet]];grOutput=ListPlot[TrainingHistory];OptionValue[EpochMonitor][currentState]]}
        ]
    ]
+
+
+Options[CNMiniBatchTrainForOneEpoch]={
+   LearningRate->.01,
+   MomentumDecay->.0,
+   MomentumType->"None"
+};
+CNMiniBatchTrainForOneEpoch[ {network_, velocity_ }, trainingSet_, lossF_, opts:OptionsPattern[] ] := (
+   { state, vel } = { network, velocity };
+   Scan[
+      Function[batch,{state,vel}=CNStepGradientDescent[{network, velocity},CNGrad[ #, batch[[All,1]],batch[[All,2]], lossF ]&, CNLayerWeightPlus,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[LearningRate]];partialTrainingLoss = lossF[ state, batch];],
+      Partition[trainingSet,100,100,1,{}]
+   ];
+   { state, vel }
+);
+
+
+CNMiniBatchTrainModel::usage = "CNMiniBatchTrainModel[ network, trainingSet, lossF, opts ] trains a
+neural network by gradient descent (not mini batch).
+Options are:
+   MaxEpoch->1000
+   LearningRate->.01
+   MomentumDecay->0
+   MomentumType->None
+";
+Options[CNMiniBatchTrainModel]={
+   MaxEpoch->10,
+   LearningRate->.01,
+   MomentumDecay->.0,
+   MomentumType->"None",
+   ValidationSet->{},
+   EpochMonitor:>(#&)};
+CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Module[{grOutput={}},
+   TrainingHistory = {};ValidationHistory={};CurrentLearningRate=OptionValue[LearningRate];
+   grOutput=0;
+   partialTrainingLoss = Null; Print[" Batch Training Loss: ",Dynamic[partialTrainingLoss ]];
+   Print[Dynamic[grOutput]];
+   (* Last term below needed to ensure velocity has the right structure *)
+   {state,velocity} = { model, CNGrad[ XORInit, trainingSet[[1;;1,1]], trainingSet[[1;;1,2]], CNRegressionLoss1D ]*0.0 };
+   For[epoch=1,epoch<OptionValue[MaxEpoch],epoch++,
+      { state, velocity } = CNMiniBatchTrainForOneEpoch[ {state, velocity}, trainingSet, lossF, FilterRules[opts,Options[CNMiniBatchTrainForOneEpoch]] ];
+      CurrentModel = state;
+      AppendTo[TrainingHistory,lossF[ state, trainingSet ] ];
+      If[Length[OptionValue[ValidationSet]]>0,
+         AppendTo[ValidationHistory, lossF[ state, OptionValue[ ValidationSet ] ] ] ];
+      grOutput = If[
+         Length[OptionValue[ValidationSet]]>0,
+            ListPlot[{TrainingHistory,ValidationHistory}],
+            ListPlot[TrainingHistory]];
+   ];
+];
 
 
 (* Loss Functions *)
