@@ -47,7 +47,7 @@ CNForwardPropogateLayer[Convolve2D[layerBias_,layerKernel_],inputs_]:=(
 );
 CNBackPropogateLayer[Convolve2D[biases_,weights_],postLayerDeltaA_,_,_]:=Table[ListConvolve[weights,postLayerDeltaA[[t]],{+1,-1},0],{t,1,Length[postLayerDeltaA]}];
 CNGradLayer[Convolve2D[biases_,weights_],layerInputs_,layerOutputDelta_]:={Total[layerOutputDelta,3],Apply[Plus,MapThread[ListCorrelate,{layerOutputDelta,layerInputs}]]};
-CNLayerWeightPlus[networkLayer_Convolve2D,grad_]:=Convolve2D[networkLayer[[1]]-grad[[1]],networkLayer[[2]]-grad[[2]]];
+CNLayerWeightPlus[networkLayer_Convolve2D,grad_]:=Convolve2D[networkLayer[[1]]+grad[[1]],networkLayer[[2]]+grad[[2]]];
 CNLayerNumberParameters[Convolve2D[layerBias_,layerKernel_]] :=
    Length[Flatten[layerKernel]] + 1;
 
@@ -60,6 +60,11 @@ CNForwardPropogateLayer[Convolve2DToFilterBank[filters_],inputs_] := (
    CNAssertAbort[(inputs[[1]]//Dimensions//Length)==2,"Convolve2DToFilterBank::inputs does not match 2D structure"];
    Transpose[Map[CNForwardPropogateLayer[#,inputs]&,filters],{2,1,3,4}]
 );
+Convolve2DToFilterBankInit[noNewFilterBank_,filterSize_]:=
+   Convolve2DToFilterBank[
+      Table[Convolve2D[0.,
+            Table[Random[]-.5,{filterSize},{filterSize}]/Sqrt[filterSize*filterSize]],
+         {noNewFilterBank}]]
 CNBackPropogateLayer[Convolve2DToFilterBank[filters_],postLayerDeltaA_,inputs_,outputs_]:=Sum[CNBackPropogateLayer[filters[[f]],postLayerDeltaA[[All,f]],inputs,outputs],{f,1,Length[filters]}]
 CNGradLayer[Convolve2DToFilterBank[filters_],layerInputs_,layerOutputDelta_]:=
    Table[{
@@ -85,7 +90,7 @@ CNBackPropogateLayer[ConvolveFilterBankTo2D[bias_,kernels_],postLayerDeltaA_,_,_
 CNGradLayer[ConvolveFilterBankTo2D[bias_,kernels_],layerInputs_,layerOutputDelta_]:=(
    (*{Total[layerOutputDelta,3],Apply[Plus,MapThread[ListCorrelate,{layerOutputDelta,layerInputs}]]}*)
    {Total[layerOutputDelta,3],Table[Apply[Plus,MapThread[ListCorrelate,{layerOutputDelta,layerInputs[[All,w]]}]],{w,1,Length[kernels]}]});
-CNLayerWeightPlus[networkLayer_ConvolveFilterBankTo2D,grad_]:=ConvolveFilterBankTo2D[networkLayer[[1]]-grad[[1]],networkLayer[[2]]-grad[[2]]];
+CNLayerWeightPlus[networkLayer_ConvolveFilterBankTo2D,grad_]:=ConvolveFilterBankTo2D[networkLayer[[1]]+grad[[1]],networkLayer[[2]]+grad[[2]]];
 CNLayerNumberParameters[ConvolveFilterBankTo2D[bias_,kernels_]] :=
    Length[Flatten[kernels]] + 1;
 
@@ -106,6 +111,11 @@ CNForwardPropogateLayer[ConvolveFilterBankToFilterBank[filters_],inputs_]:=Modul
    i3=Transpose[i2,{1,3,4,2}];
    Do[i3[[All,t]]=i3[[All,t]]+filters[[All,1]][[t]],{t,1,Length[i3[[1]]]}];i3
 ];
+ConvolveFilterBankToFilterBankInit[noOldFilterBank_,noNewFilterBank_,filterSize_]:=
+   ConvolveFilterBankToFilterBank[
+      Table[ConvolveFilterBankTo2D[0.,
+            Table[Random[]-.5,{noOldFilterBank},{filterSize},{filterSize}]/Sqrt[noOldFilterBank*filterSize*filterSize]],
+         {noNewFilterBank}]]
 CNBackPropogateLayer[ConvolveFilterBankToFilterBank[filters_],postLayerDeltaA_,inputs_,outputs_]:=
    Sum[CNBackPropogateLayer[filters[[f]],postLayerDeltaA[[All,f]],inputs,outputs],{f,1,Length[filters]}];
 CNGradLayer[ConvolveFilterBankToFilterBank[filters_],layerInputs_,layerOutputDelta_]:=
@@ -113,9 +123,9 @@ CNGradLayer[ConvolveFilterBankToFilterBank[filters_],layerInputs_,layerOutputDel
       Total[layerOutputDelta[[All,filterOutputIndex]],3],
       ListCorrelate[Transpose[{layerOutputDelta[[All,filterOutputIndex]]},{2,1,3,4}],layerInputs][[1]]},
       {filterOutputIndex,1,Length[filters]}]
-CNLayerWeightPlus[ConvolveFilterBankToFilterBank[filters_],grad_]:=ConvolveFilterBankToFilterBank[WeightDec[filters,grad]];
+CNLayerWeightPlus[ConvolveFilterBankToFilterBank[filters_],grad_]:=ConvolveFilterBankToFilterBank[CNLayerWeightPlus[filters,grad]];
 CNLayerNumberParameters[ConvolveFilterBankToFilterBank[filters_]] :=
-   Total[Map[CNLayerNumberParameters,filters]]
+   Total[Map[CNLayerNumberParameters,filters]];
 
 
 (*
@@ -203,6 +213,18 @@ CNLayerWeightPlus[Softmax,grad_]:=Softmax;
 CNLayerNumberParameters[Softmax] := 0;
 
 
+SyntaxInformation[Adaptor2DTo1D]={"ArgumentsPattern"->{_}};
+CNForwardPropogateLayer[Adaptor2DTo1D[width_],inputs_]:=(
+   CNAssertAbort[(inputs[[1,1]]//Length)==width,"Adaptor2DTo1D::widths of inputs does not match Adaptor width"];
+   Map[Flatten,inputs]
+);
+CNBackPropogateLayer[Adaptor2DTo1D[width_],postLayerDeltaA_,_,_]:=
+   Map[Partition[#,width]&,postLayerDeltaA];
+CNGradLayer[Adaptor2DTo1D[width_],layerInputs_,layerOutputDelta_]:={}
+CNLayerWeightPlus[networkLayer_Adaptor2DTo1D,grad_]:=Adaptor2DTo1D[networkLayer[[1]]];
+CNLayerNumberParameters[Adaptor2DTo1D] := 0;
+
+
 (*
    Layer: AdaptorFilterBankTo1D
 *)
@@ -216,7 +238,7 @@ CNForwardPropogateLayer[AdaptorFilterBankTo1D[features_,width_,height_],inputs_]
 CNBackPropogateLayer[AdaptorFilterBankTo1D[features_,width_,height_],postLayerDeltaA_,_,_]:=
    unflatten[Flatten[postLayerDeltaA],{Length[postLayerDeltaA],features,width,height}];
 CNGradLayer[AdaptorFilterBankTo1D[features_,width_,height_],layerInputs_,layerOutputDelta_]:={};
-CNLayerWeightPlus[networkLayer_Adaptor3DTo1D,grad_]:=AdaptorFilterBankTo1D[networkLayer[[1]],networkLayer[[2]],networkLayer[[3]]];
+CNLayerWeightPlus[networkLayer_AdaptorFilterBankTo1D,grad_]:=AdaptorFilterBankTo1D[networkLayer[[1]],networkLayer[[2]],networkLayer[[3]]];
 CNLayerNumberParameters[AdaptorFilterBankTo1D[features_,width_,height_]] := 0;
 
 (* Deprecated *)
