@@ -331,6 +331,11 @@ CNMiniBatchTrainCategoricalModel[model_,trainingSet_,lossF_, categoryList_, opts
    CNMiniBatchTrainModel[ model, CNConvertTrainingSetTo1OfKRepresentation[trainingSet, categoryList], lossF, opts ]
 
 
+CNCheckGrad[weight_,network_, testSet_,lossF_,epsilon_:10^-6]:=
+   (lossF[ReplacePart[network,weight->Extract[network,weight]+epsilon], testSet]-
+   lossF[network, testSet])/epsilon
+
+
 (* Loss Functions *)
 
 
