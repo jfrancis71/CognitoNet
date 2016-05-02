@@ -11,6 +11,13 @@
 <<CNNeuralTrain.m
 
 
+CNToActivations[ input_?CNImageQ ] := ImageData[input];
+CNToActivations[ input_?CNColImageQ ] := ImageData[input,Interleaving->False];
+CNToActivations[ inputs_?CNImageListQ ] := Map[ImageData,inputs];
+CNToActivations[ inputs_?CNColImageListQ ] := Map[ ImageData[#,Interleaving->False]&, inputs ];
+CNToActivations[ inputs_ ] := inputs
+
+
 CNReadModel::usage = "CNReadModel[\"file\"] reads in a pretrained file.\n
 It uses the $CNModelDir variable to determine the base directory to search from.
 The .wdx extension is assumed and should not be appended.\n
@@ -28,7 +35,7 @@ CNDescription[network_] := Column[{
    "Total of " <> ToString[Total[Map[CNLayerNumberParameters,network]]] <> " parameters."
    }];
 CNDescription[network_,input_] := Module[
-   {forward = Rest[CNForwardPropogateLayers[{input},network]]},df=forward;
+   {forward = CNForwardPropogateLayers[{ CNToActivations[ input ] } ,network]},df=forward;
    Column[{
    MapThread[
       CNLayerDescription[#1]<>" with " <> 
@@ -56,20 +63,12 @@ CNForwardPropogate[inputs_,network_]:=
    Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
 
 
-CNForwardPropogate[images_?CNImageListQ,network_] :=
-   CNForwardPropogate[Map[ImageData[#]&,images],network];
+CNForwardPropogate[images_?(CNImageListQ||CNColImageQ),network_] :=
+   CNForwardPropogate[ CNToActivations[ images ],network];
 
 
-CNForwardPropogate[images_?CNColImageListQ,network_] :=
-   CNForwardPropogate[Map[ImageData[#,Interleaving->False]&,images],network];
-
-
-CNForwardPropogate[image_?CNImageQ,network_] :=
-   CNForwardPropogate[ {ImageData[image]}, network ][[1]];
-
-
-CNForwardPropogate[image_?CNColImageQ,network_] :=
-   CNForwardPropogate[ {ImageData[image,Interleaving->False]}, network ][[1]];
+CNForwardPropogate[image_?(CNImageQ||CNColImageQ),network_] :=
+   CNForwardPropogate[ { CNToActivations[ image ] }, network ][[1]];
 
 
 (* Note you should be cautious using this function applied to large datasets with
@@ -103,25 +102,22 @@ CNClassifyToIndex[input_,network_List]:=
       Position[outputs,Max[outputs]][[1,1]]];
 
 
-CNClassify::usage = "CNClassify[inputs,network,categoryLabels]
+CNClassifyCategoricalModel::usage = "CNClassifyCategoricalModel[inputs,network,categoryLabels]
 Runs the inputs through the neural networks and classifies them according to the most likely category.
 The network is expected to output probabilities in a 1 of K format.
 Therefore categoryLabels should be a list of length K.";
-CNClassify[inputs_List,network_List,categoryLabels_]:=
-   Map[categoryLabels[[#]]&,CNClassifyToIndex[inputs,network]];
-CNClassify[inputs_,network_List,categoryLabels_]:=
-   categoryLabels[[CNClassifyToIndex[inputs,network]]];
+CNClassifyCategoricalModel[inputs_ ,network_List, categoryLabels_]:= (
+   CNAssertAbort[ Last[ network ] === Softmax, "CNClassifyCategoricalModel::Error - presumably final layer should be Softmax."];
+   categoryLabels[[CNClassifyToIndex[inputs,network]]] )
 
 
-CNClassificationPerformance::usage = "
+CNCategoricalClassificationAccuracy::usage = "
 CNClassificationPerformance[inputs,targetLabels,net,categoryMap]
 returns fraction of input examples labelled correctly.
 CNClassificationPerformance[testSet,net,categoryMap]
 returns fraction of test set labelled correctly.
 ";
-CNClassificationPerformance[inputs_,targetLabels_,net_,categoryMap_List]:=
-   Total[Boole[MapThread[Equal,{CNClassify[inputs,net,categoryMap],targetLabels}]]]/Length[inputs]//N;
-CNClassificationPerformance[testSet_,net_,categoryMap_List]:=
+CNCategoricalClassificationAccuracy[testSet_,net_,categoryMap_List]:=
    Total[Boole[MapThread[Equal,{CNClassify[testSet[[All,1]],net,categoryMap],testSet[[All,2]]}]]]/Length[testSet]//N;
 
 
@@ -131,4 +127,5 @@ CNRegressionLoss1D[model_,testSet_] :=
    (outputs=CNForwardPropogate[testSet[[All,1]],model];CNAssertAbort[Dimensions[outputs]==Dimensions[testSet[[All,2]]],"Loss1D::Mismatched Targets and Outputs"];Total[(outputs-testSet[[All,2]])^2,2]/Length[testSet]);
 CNCrossEntropyLoss[model_,testSet_]:=
    Module[{output=CNForwardPropogate[testSet[[All,1]],model]},re=output;-Total[testSet[[All,2]]*Log[output]+(1-testSet[[All,2]])*Log[1-output],2]/Length[testSet]];
-CNClassificationLoss[parameters_,testSet_]:=-Total[Log[Extract[CNForwardPropogate[testSet[[All,1]],parameters],Position[testSet[[All,2]],1]]]]/Length[testSet];
+CNCategoricalLoss::usage = "CNCategoricalLoss[ parameters, testSet ] Note that no label maps are passed in, so testSet must be in 1 of K format.";
+CNCategoricalLoss[parameters_,testSet_]:=-Total[Log[Extract[CNForwardPropogate[testSet[[All,1]],parameters],Position[testSet[[All,2]],1]]]]/Length[testSet];
