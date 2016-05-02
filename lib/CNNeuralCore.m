@@ -23,9 +23,7 @@ It uses the $CNModelDir variable to determine the base directory to search from.
 The .wdx extension is assumed and should not be appended.\n
 It will write over the TrainingHistory,ValidationHistory,CurrentModel and LearningRate variables.
 ";
-CNReadModel[netFile_String]:=(
-   {TrainingHistory,ValidationHistory,CurrentModel,CurrentLearningRate} = 
-      Import[$CNModelDir<>netFile<>".wdx"];);
+CNReadModel[netFile_String] := Import[$CNModelDir<>netFile<>".wdx"];
 
 
 CNDescription::usage = "CNDescription[network] returns a description of the network.";

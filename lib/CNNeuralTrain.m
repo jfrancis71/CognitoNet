@@ -6,6 +6,10 @@
 CNLayerWeightPlus[ networkLayers_List, grad_List ] :=MapThread[ CNLayerWeightPlus, { networkLayers, grad } ]
 
 
+CNWriteModel::usage = "CNWriteModel[ \"file\", network ] writes network to file under $CNModelDir appending .wdx";
+CNWriteModel[ netFile_String, network_ ] := Export[ $CNModelDir<>netFile<>".wdx", network ];
+
+
 CNBackPropogateLayers::usage = "CNBackPropogateLayers[ network, neuronActivations, finalLayerDelta ] will backpropogate the
 sensitivity of the loss function given by finalLayerDelta through the network. neuronActivations is the current activations
 for all the neurons in the network and for all the training examples in the gradient descent calculation. So the number of
@@ -114,7 +118,7 @@ CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] 
          AppendTo[ValidationHistory, lossF[ state, OptionValue[ ValidationSet ] ] ] ];
       grOutput = If[
          Length[OptionValue[ValidationSet]]>0,
-            ListPlot[{TrainingHistory,ValidationHistory}],
+            ListPlot[{TrainingHistory,ValidationHistory},PlotStyle->{Blue,Green}],
             ListPlot[TrainingHistory]];
    ];
 ];
@@ -131,7 +135,10 @@ CNTrainingSetTo1OfK[trainingSet_,categoryList_]:=
 
 Options[CNMiniBatchTrainModel]=Options[CNMiniBatchTrainModelInternal];
 CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
-   CNMiniBatchTrainModelInternal[ model, MapThread[#1->#2&,{CNToActivations[trainingSet[[All,1]]],trainingSet[[All,2]]}], lossF, opts ];
+   CNMiniBatchTrainModelInternal[ model,
+      MapThread[#1->#2&,{CNToActivations[trainingSet[[All,1]]],trainingSet[[All,2]]}],
+      lossF,
+      Append[ FilterRules[opts, Except[ValidationSet]], ValidationSet->MapThread[#1->#2&,{CNToActivations[OptionValue[ValidationSet][[All,1]]],OptionValue[ValidationSet][[All,2]]}]] ]
 
 
 CNTrainModel::usage = "CNTrainModel[ network, trainingSet, lossF, opts ] trains a
@@ -149,7 +156,7 @@ CNTrainModel[ network_, trainingSet_, lossF_, opt:OptionsPattern[] ] :=
 
 Options[CNMiniBatchTrainCategoricalModel]=Options[CNMiniBatchTrainModel];
 CNMiniBatchTrainCategoricalModel[model_,trainingSet_,lossF_, categoryList_, opts:OptionsPattern[]] :=
-   CNMiniBatchTrainModel[ model, CNTrainingSetTo1OfK[trainingSet, categoryList], lossF, opts ]
+   CNMiniBatchTrainModel[ model, CNTrainingSetTo1OfK[trainingSet, categoryList], lossF, Append[ FilterRules[opts,Except[ValidationSet]], ValidationSet->CNTrainingSetTo1OfK[ OptionValue[ValidationSet], categoryList ] ] ];
 
 
 Options[CNTrainCategoricalModel] = Options[ CNTrainModel ];
