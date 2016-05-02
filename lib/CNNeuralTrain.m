@@ -90,7 +90,7 @@ CNDefaultTrainingOptions={
    LearningRate->.01,
    MomentumDecay->.0,
    MomentumType->"None",
-   EpochMonitor:>(#&)};
+   EpochMonitor:>Function[{},0]};
 
 
 SyntaxInformation[BatchSize]={"ArgumentsPattern"->{_}};
