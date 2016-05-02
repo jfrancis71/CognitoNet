@@ -48,6 +48,12 @@ CNImportImage[file_String,{width_Integer,height_Integer}]:=
    CNImportImage[Import[file],{width,height}];
 
 
+CNReadImagesFromDirectory[directory_String,size_:128]:=
+   Map[CNImportImage[#,size]&,
+   FileNames[StringJoin[directory,"\\*.jpg"]]
+]
+
+
 CNMovieLength[file_String] := Import[file]//Length;
 CNImportMovie[file_String,width_Integer] :=
    CNImportMovie[file,width, CNMovieLength[file]];
