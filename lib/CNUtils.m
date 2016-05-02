@@ -18,6 +18,18 @@ CNImage[matrix_?MatrixQ]:=Graphics[Raster[matrix]];
 *)
 
 
+CNImageQ[image_] := ImageQ[image]&&ImageChannels[image]==1;
+
+
+CNColImageQ[image_] := ImageQ[image]&&ImageChannels[image]==3;
+
+
+CNImageListQ[images_List] := ImageQ[images[[1]]]&&ImageChannels[images[[1]]]==1
+
+
+CNColImageListQ[images_List] := ImageQ[images[[1]]]&&ImageChannels[images[[1]]]==3
+
+
 CNImportImage::usage = "CNImportImage[image,width] takes a Mathematica Image object
 and returns a grayscale image.
 CNImportImage[image,{width,height}] takes a Mathematica Image object
