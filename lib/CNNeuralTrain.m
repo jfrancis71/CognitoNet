@@ -10,6 +10,9 @@ CNWriteModel::usage = "CNWriteModel[ \"file\", network ] writes network to file 
 CNWriteModel[ netFile_String, network_ ] := Export[ $CNModelDir<>netFile<>".wdx", network ];
 
 
+CNCheckpoint[ netFile_String ] := CNWriteModel[ netFile <> DateString[{"Year","-","Month","-","Day"," ","Hour"}], CurrentModel ];
+
+
 CNBackPropogateLayers::usage = "CNBackPropogateLayers[ network, neuronActivations, finalLayerDelta ] will backpropogate the
 sensitivity of the loss function given by finalLayerDelta through the network. neuronActivations is the current activations
 for all the neurons in the network and for all the training examples in the gradient descent calculation. So the number of
@@ -120,6 +123,7 @@ CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] 
          Length[OptionValue[ValidationSet]]>0,
             ListPlot[{TrainingHistory,ValidationHistory},PlotStyle->{Blue,Green}],
             ListPlot[TrainingHistory]];
+      OptionValue[EpochMonitor][];
    ];
 ];
 
