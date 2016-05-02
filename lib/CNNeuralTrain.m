@@ -75,70 +75,30 @@ CNGrad[model_,inputs_,targets_,lossF_]:=(
 );
 
 
-CNTrainModel::usage = "CNTrainModel[ network, trainingSet, lossF, opts ] trains a
-neural network by gradient descent (not mini batch).
-Options are:
-   MaxEpoch->1000
-   LearningRate->.01
-   MomentumDecay->0
-   MomentumType->None
-";
 SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{_}};
 SyntaxInformation[LearningRate]={"ArgumentsPattern"->{_}};
 SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
-Options[CNTrainModel]={
+CNDefaultTrainingOptions={
    MaxEpoch->1000,
    LearningRate->.01,
    MomentumDecay->.0,
    MomentumType->"None",
    EpochMonitor:>(#&)};
-CNTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Module[{grOutput={}},
-   TrainingHistory = {};ValidationHistory={};CurrentLearningRate=OptionValue[LearningRate];
-   Print[Dynamic[grOutput]];
-   CNGradientDescent[
-      model,
-      CNGrad[#,trainingSet[[All,1]],trainingSet[[All,2]],lossF]&,
-      CNLayerWeightPlus,
-      OptionValue[MaxEpoch],
-      {
-         StepSize->OptionValue[LearningRate],
-         MomentumDecay->OptionValue[MomentumDecay],
-         MomentumType->OptionValue[MomentumType],
-         StepMonitor:>Function[currentState,CurrentModel=currentState;AppendTo[TrainingHistory,lossF[currentState,trainingSet]];grOutput=ListPlot[TrainingHistory];OptionValue[EpochMonitor][currentState]]}
-       ]
-   ]
 
 
-Options[CNMiniBatchTrainForOneEpoch]={
-   LearningRate->.01,
-   MomentumDecay->.0,
-   MomentumType->"None"
-};
+SyntaxInformation[BatchSize]={"ArgumentsPattern"->{_}};
+Options[CNMiniBatchTrainForOneEpoch]=Append[CNDefaultTrainingOptions,BatchSize->100];
 CNMiniBatchTrainForOneEpoch[ {network_, velocity_ }, trainingSet_, lossF_, opts:OptionsPattern[] ] := (
    { state, vel } = { network, velocity };
    Scan[
       Function[batch,{state,vel}=CNStepGradientDescent[{state, vel},CNGrad[ #, batch[[All,1]],batch[[All,2]], lossF ]&, CNLayerWeightPlus,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[LearningRate]];partialTrainingLoss = lossF[ state, batch];],
-      Partition[trainingSet,100,100,1,{}]
+      Partition[trainingSet,OptionValue[BatchSize],OptionValue[BatchSize],1,{}]
    ];
    { state, vel }
 );
 
 
-CNMiniBatchTrainModel::usage = "CNMiniBatchTrainModel[ network, trainingSet, lossF, opts ] trains a
-neural network by gradient descent (not mini batch).
-Options are:
-   MaxEpoch->1000
-   LearningRate->.01
-   MomentumDecay->0
-   MomentumType->None
-";
-Options[CNMiniBatchTrainModelInternal]={
-   MaxEpoch->10,
-   LearningRate->.01,
-   MomentumDecay->.0,
-   MomentumType->"None",
-   ValidationSet->{},
-   EpochMonitor:>(#&)};
+Options[CNMiniBatchTrainModelInternal] = Join[CNDefaultTrainingOptions,{BatchSize->100, ValidationSet->{}}];
 CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Module[{grOutput={}},
    TrainingHistory = {};ValidationHistory={};CurrentLearningRate=OptionValue[LearningRate];
    grOutput=0;
@@ -159,40 +119,42 @@ CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] 
    ];
 ];
 
-Options[CNMiniBatchTrainModel]={
-   MaxEpoch->10,
-   LearningRate->.01,
-   MomentumDecay->.0,
-   MomentumType->"None",
-   ValidationSet->{},
-   EpochMonitor:>(#&)};
-CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
-   Which[
-      CNImageQ[trainingSet[[1,1]]], CNMiniBatchTrainModelInternal[ model, Map[ImageData[#[[1]]]->#[[2]]&, trainingSet], lossF, opts ],
-      CNColImageQ[trainingSet[[1,1]]], CNMiniBatchTrainModelInternal[ model, Map[ImageData[#[[1]],Interleaving->False]->#[[2]]&,trainingSet], lossF, opts ],
-      True, CNMiniBatchTrainModelInternal[ model, trainingSet, lossF, opts ]
-   ];
 
-
-CNConvertTargetsTo1OfKRepresentation[targets_,categoryList_]:=
+CNTargetsTo1OfK[targets_,categoryList_]:=
    Map[
       ReplacePart[ConstantArray[0,Length[categoryList]],Position[categoryList,#][[1,1]]->1]&,targets];
 
 
-CNConvertTrainingSetTo1OfKRepresentation[trainingSet_,categoryList_]:=
-   Map[#[[1]]->
-      ReplacePart[ConstantArray[0,Length[categoryList]],Position[categoryList,#[[2]]][[1,1]]->1]&,trainingSet];
+CNTrainingSetTo1OfK[trainingSet_,categoryList_]:=
+   MapThread[#1->#2&,{trainingSet[[All,1]],CNTargetsTo1OfK[ trainingSet[[All,2]], categoryList ] }];
 
 
-Options[CNMiniBatchTrainCategoricalModel]={
-   MaxEpoch->10,
-   LearningRate->.01,
-   MomentumDecay->.0,
-   MomentumType->"None",
-   ValidationSet->{},
-   EpochMonitor:>(#&)};
+Options[CNMiniBatchTrainModel]=Options[CNMiniBatchTrainModelInternal];
+CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
+   CNMiniBatchTrainModelInternal[ model, MapThread[#1->#2&,{CNToActivations[trainingSet[[All,1]]],trainingSet[[All,2]]}], lossF, opts ];
+
+
+CNTrainModel::usage = "CNTrainModel[ network, trainingSet, lossF, opts ] trains a
+neural network by gradient descent (not mini batch).
+Options are:
+   MaxEpoch->1000
+   LearningRate->.01
+   MomentumDecay->0
+   MomentumType->None
+";
+Options[CNTrainModel] = Join[CNDefaultTrainingOptions,{ValidationSet->{}}];
+CNTrainModel[ network_, trainingSet_, lossF_, opt:OptionsPattern[] ] :=
+   CNMiniBatchTrainModel[ network, trainingSet, lossF, opt ]
+
+
+Options[CNMiniBatchTrainCategoricalModel]=Options[CNMiniBatchTrainModel];
 CNMiniBatchTrainCategoricalModel[model_,trainingSet_,lossF_, categoryList_, opts:OptionsPattern[]] :=
-   CNMiniBatchTrainModel[ model, CNConvertTrainingSetTo1OfKRepresentation[trainingSet, categoryList], lossF, opts ]
+   CNMiniBatchTrainModel[ model, CNTrainingSetTo1OfK[trainingSet, categoryList], lossF, opts ]
+
+
+Options[CNTrainCategoricalModel] = Options[ CNTrainModel ];
+CNTrainCategoricalModel[ network_, trainingSet_, lossF_, categoryList_, opt:OptionsPattern[] ] :=
+   CNMiniBatchTrainCategoricalModel[ network, trainingSet, lossF, categoryList, opt ]
 
 
 CNCheckGrad[weight_,network_, testSet_,lossF_,epsilon_:10^-6]:=
@@ -206,4 +168,4 @@ CNCheckGrad[weight_,network_, testSet_,lossF_,epsilon_:10^-6]:=
 CNDeltaLoss[CNRegressionLoss,outputs_,targets_]:=2.0*(outputs-targets)/Length[outputs];
 CNDeltaLoss[CNRegressionLoss1D,outputs_,targets_]:=2.0*(outputs-targets)/Length[outputs];
 CNDeltaLoss[CNCrossEntropyLoss,outputs_,targets_]:=-((-(1-targets)/(1-outputs)) + (targets/outputs))/Length[outputs];
-CNDeltaLoss[CNClassificationLoss,outputs_,targets_]:=-targets*(1.0/outputs)/Length[outputs];
+CNDeltaLoss[CNCategoricalLoss,outputs_,targets_]:=-targets*(1.0/outputs)/Length[outputs];
