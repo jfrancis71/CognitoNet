@@ -253,7 +253,7 @@ Options[CNMiniBatchTrainForOneEpoch]={
 CNMiniBatchTrainForOneEpoch[ {network_, velocity_ }, trainingSet_, lossF_, opts:OptionsPattern[] ] := (
    { state, vel } = { network, velocity };
    Scan[
-      Function[batch,{state,vel}=CNStepGradientDescent[{network, velocity},CNGrad[ #, batch[[All,1]],batch[[All,2]], lossF ]&, CNLayerWeightPlus,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[LearningRate]];partialTrainingLoss = lossF[ state, batch];],
+      Function[batch,{state,vel}=CNStepGradientDescent[{state, vel},CNGrad[ #, batch[[All,1]],batch[[All,2]], lossF ]&, CNLayerWeightPlus,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[LearningRate]];partialTrainingLoss = lossF[ state, batch];],
       Partition[trainingSet,100,100,1,{}]
    ];
    { state, vel }
