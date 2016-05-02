@@ -61,11 +61,11 @@ CNForwardPropogate[inputs_,network_]:=
    Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
 
 
-CNForwardPropogate[images_?(CNImageListQ||CNColImageQ),network_] :=
-   CNForwardPropogate[ CNToActivations[ images ],network];
+CNForwardPropogate[images_?(CNImageListQ[#]||CNColImageListQ[#]&),network_] :=
+   CNForwardPropogate[ CNToActivations[ images ],network]
 
 
-CNForwardPropogate[image_?(CNImageQ||CNColImageQ),network_] :=
+CNForwardPropogate[image_?(CNImageQ[#]||CNColImageQ[#]&),network_] :=
    CNForwardPropogate[ { CNToActivations[ image ] }, network ][[1]];
 
 
@@ -116,7 +116,7 @@ CNClassificationPerformance[testSet,net,categoryMap]
 returns fraction of test set labelled correctly.
 ";
 CNCategoricalClassificationAccuracy[testSet_,net_,categoryMap_List]:=
-   Total[Boole[MapThread[Equal,{CNClassify[testSet[[All,1]],net,categoryMap],testSet[[All,2]]}]]]/Length[testSet]//N;
+   Total[Boole[MapThread[Equal,{CNClassifyCategoricalModel[testSet[[All,1]],net,categoryMap],testSet[[All,2]]}]]]/Length[testSet]//N;
 
 
 CNRegressionLoss[model_,testSet_] :=
