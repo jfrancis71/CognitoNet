@@ -3,11 +3,8 @@
 <<CNNeuralCore.m
 
 
-(* Read in the pretrained models and save them with different names so they
-   are not overwritten.
-*)
-CNReadModel["FaceNet\\FaceDetectionNet1"]; FaceNet = CurrentModel;
-CNReadModel["FaceNet\\GenderDetectionNet1"]; GenderNet = CurrentModel;
+FaceNet = CNReadModel["FaceNet\\FaceDetectionNet1"];
+GenderNet = CNReadModel["FaceNet\\GenderDetectionNet1"];
 
 
 CNFaceDetection::usage = "CNFaceDetection[mirror,spaces] performs face detection.
