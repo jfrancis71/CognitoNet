@@ -105,6 +105,7 @@ CNMiniBatchTrainForOneEpoch[ {network_, velocity_ }, trainingSet_, lossF_, opts:
 );
 
 
+SyntaxInformation[ValidationSet]={"ArgumentsPattern"->{}};
 Options[CNMiniBatchTrainModelInternal] = Join[CNDefaultTrainingOptions,{BatchSize->100, ValidationSet->{}}];
 CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] := Module[{grOutput={}},
    TrainingHistory = {};ValidationHistory={};CurrentLearningRate=OptionValue[LearningRate];
@@ -155,7 +156,7 @@ Options are:
 ";
 Options[CNTrainModel] = Join[CNDefaultTrainingOptions,{ValidationSet->{}}];
 CNTrainModel[ network_, trainingSet_, lossF_, opt:OptionsPattern[] ] :=
-   CNMiniBatchTrainModel[ network, trainingSet, lossF, opt ]
+   CNMiniBatchTrainModel[ network, trainingSet, lossF, {opt,BatchSize->Length[trainingSet]} ]
 
 
 Options[CNMiniBatchTrainCategoricalModel]=Options[CNMiniBatchTrainModel];

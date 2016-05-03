@@ -15,7 +15,8 @@ CNToActivations[ input_?CNImageQ ] := ImageData[input];
 CNToActivations[ input_?CNColImageQ ] := ImageData[input,Interleaving->False];
 CNToActivations[ inputs_?CNImageListQ ] := Map[ImageData,inputs];
 CNToActivations[ inputs_?CNColImageListQ ] := Map[ ImageData[#,Interleaving->False]&, inputs ];
-CNToActivations[ inputs_ ] := inputs
+CNToActivations[ inputs_ ] := inputs;
+CNToActivations[ {} ] := {};
 
 
 CNReadModel::usage = "CNReadModel[\"file\"] reads in a pretrained file.\n
