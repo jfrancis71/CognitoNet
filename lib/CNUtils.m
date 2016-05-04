@@ -1,12 +1,14 @@
 (* ::Package:: *)
 
-CNAssertAbort::usage = "CNAssertAbort[bool,message] will abort computation if bool is True (and print message).";
+CNAssertAbort::usage = "CNAssertAbort[bool,message] will abort computation if bool is True
+(and print message).";
 CNAssertAbort[bool_,message_]:=
    If[bool==False,
       Print[message];Abort[]];
 
 
-CNTimer[message_,expr_]:=Module[{timer=AbsoluteTiming[expr]},If[MatchQ[$timers,True],Print[message," ",timer[[1]]," secs"]];timer[[2]]];
+CNTimer[message_,expr_] := Module[{timer=AbsoluteTiming[expr]},
+      If[MatchQ[$timers,True],Print[message," ",timer[[1]]," secs"]];timer[[2]]];
 SetAttributes[CNTimer,HoldAll];
 
 
@@ -34,9 +36,10 @@ CNImportImage::usage = "CNImportImage[image,width] takes a Mathematica Image obj
 and returns a grayscale image.
 CNImportImage[image,{width,height}] takes a Mathematica Image object
 and returns a grayscale image of specified image width and height.
-CNImportImage[file,width] reads an image file in and returns a grayscale image of specified image width.
-CNImportImage[file,{width,height}] reads an image file in and returns a grayscale image of specified image width and height.
-This function provides an easy way to both convert to grayscale and resize at the same time.
+CNImportImage[file,width] reads an image file in and returns a grayscale image of specified
+image width. CNImportImage[file,{width,height}] reads an image file in and returns a grayscale
+image of specified image width and height. This function provides an easy way to both convert
+to grayscale and resize at the same time.
 ";
 CNImportImage[image_Image,width_Integer]:=
    ColorConvert[ImageResize[image,width],"GrayScale"]
@@ -59,7 +62,8 @@ CNImportMovie[file_String,width_Integer] :=
    CNImportMovie[file,width, CNMovieLength[file]];
 CNImportMovie[file_String,width_Integer,frames_Integer] :=
    Flatten[Map[
-      Map[Function[conv,CNImportImage[conv,width]],Import[file,{"Frames",#}]]&,Partition[Range[frames],10,10,1,{}]],1];
+      Map[Function[conv,CNImportImage[conv,width]],Import[file,{"Frames",#}]]&,
+         Partition[Range[frames],10,10,1,{}]],1];
 
 
 (*
@@ -75,35 +79,40 @@ CNImageRescale[image_Image,scale_] :=
    ImageResize[image,scale*ImageDimensions[image][[1]]]
 
 
-CNRescaleGraphics::usage = "CNRescaleGraphics[f,image,scale] will rescale image and pass it into function f
-which is expected to produce a list of Graphics objects and then rescale back this output.";
+CNRescaleGraphics::usage = "CNRescaleGraphics[f,image,scale] will rescale image and pass it
+into function f which is expected to produce a list of Graphics objects and then rescale back
+this output.";
 CNRescaleGraphics[f_Function,image_Image,scale_?NumberQ] :=
    Graphics[Map[Scale[#[[1]],1/scale,{0,0}]&,f[CNImageRescale[image,scale]]]];
 
 
 CNBoundingRectangles::usage = "CNBoundingRectangles[coords, filterSize] draws a 
-rectangle of dimensions specified by filterSize {width,height} centered on each point in coords where
-points are specified by (y,x) with y in raster coordinates.";
+rectangle of dimensions specified by filterSize {width,height} centered on each point in
+coords where points are specified by (y,x) with y in raster coordinates.";
 CNBoundingRectangles[coords_?MatrixQ,filterSize_?VectorQ]:=
    Map[Rectangle[#-filterSize,#+filterSize]&,coords]
 
 
-CNOutlineGraphics::usage = "CNOutlineGraphics[grObjects,color] produces a Graphics object with the
-grObjects made transparent except for their edges.";
-CNOutlineGraphics[grObjects_,Color_:Green]:=Graphics[{Opacity[0],Color,EdgeForm[Directive[Color,Thick]],grObjects}]
+CNOutlineGraphics::usage = "CNOutlineGraphics[grObjects,color] produces a Graphics object
+with the grObjects made transparent except for their edges.";
+CNOutlineGraphics[grObjects_,Color_:Green] := Graphics[{Opacity[0],Color,
+      EdgeForm[Directive[Color,Thick]],grObjects}]
 
 
 CNCameraMainLoop::usage = "CNCameraMainLoop[programF,width] evaluates and displays programF in an infinite loop.
 programF should be a function accepting a single argument which is the camera image.
 You should specify the width of the image that programF is expecting.";
 CNCameraMainLoop[programF_,width_] := 
-   Module[{grOutput},Monitor[While[True,grOutput=programF[CNImportImage[CurrentImage[],width]]],grOutput]];
+   Module[{grOutput},Monitor[While[True,
+      grOutput=programF[CNImportImage[CurrentImage[],width]]],grOutput]];
 
 
 (* http://www.cs.toronto.edu/~fritz/absps/momentum.pdf *)
 (* On the importance of initialization and momentum in deep learning *)
 (* Sutskever, Martens, Dahl, Hinton (2013) *)
-CNStepGradientDescent[ {state_, velocity_}, gradF_, plusF_, momentumDecay_, momentumType_, stepSize_ ]:=(
+CNStepGradientDescent[ {state_, velocity_}, gradF_, plusF_, momentumDecay_, momentumType_,
+   stepSize_ ] := (
+
    gw=If[momentumType!="Nesterov",
       gradF[state],
       gradF[plusF[state,momentumDecay*velocity]]
@@ -121,9 +130,13 @@ Options[CNGradientDescent]={
    MomentumType->"CM",
    StepSize->.01,
    StepMonitor:>(#&)};
-CNGradientDescent::usage = "NGradientDescent[state_, gradF_, plusF_, iterations_, opts] performs gradient descent.";
+CNGradientDescent::usage = "NGradientDescent[state_, gradF_, plusF_, iterations_, opts]
+performs gradient descent.";
 CNGradientDescent[state_,gradF_,plusF_,iterations_,opts:OptionsPattern[]] :=
-   First[Nest[
-      (updateStep=CNStepGradientDescent[#,gradF,plusF,OptionValue[MomentumDecay],OptionValue[MomentumType],OptionValue[StepSize]];OptionValue[StepMonitor][First[updateStep]];updateStep)&,
-      {state,gradF[state]*0.0}, (* needed as if velocity has complex structure it will be otherwise initialized incorrectly *)
+   First[Nest[(
+      updateStep=CNStepGradientDescent[#,gradF,plusF,OptionValue[MomentumDecay],
+         OptionValue[MomentumType],OptionValue[StepSize]];
+      OptionValue[StepMonitor][First[updateStep]];updateStep)&,
+      {state,gradF[state]*0.0}, (* needed as if velocity has complex structure it will be
+                                   otherwise initialized incorrectly *)
       iterations]]
