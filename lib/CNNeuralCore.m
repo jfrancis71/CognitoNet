@@ -71,22 +71,6 @@ CNForwardPropogate[image_?(CNImageQ[#]||CNColImageQ[#]&),network_] :=
    CNForwardPropogate[ { CNToActivations[ image ] }, network ][[1]];
 
 
-(* Note you should be cautious using this function applied to large datasets with
-   a large and complex neural network. Memory usage may be excessive.
-   Consider using the partition'd version ForwardPropogate instead
-*)
-CNForwardPropogateInternal[inputs_List,network_]:=
-   Last[CNForwardPropogateLayers[inputs,network]];
-
-
-CNForwardPropogateLayers::usage = "CNForwardPropogateLayers[inputs,network] runs inputs
-through the network and returns the output of each layer. Note you should be cautious using
-this with large multi layer nets with a large number of input examples due to excessive
-memory usage. (Consider using smaller #inputs)";
-CNForwardPropogateLayers[inputs_List,network_]:=
-   Rest[FoldList[CNForwardPropogateLayer[#2,#1]&,inputs,network]];
-
-
 (* Classification Logic *)
 
 
@@ -122,6 +106,30 @@ returns fraction of test set labelled correctly.
 CNCategoricalClassificationAccuracy[testSet_,net_,categoryMap_List]:=
    Total[Boole[MapThread[Equal,{CNClassifyCategoricalModel[
       testSet[[All,1]],net,categoryMap],testSet[[All,2]]}]]]/Length[testSet]//N;
+
+
+(*
+   ALL Code Below this point has no knowledge of Mathematica Image structures, categories, etc
+   It only knows about neural networks, activations and network parameters.
+   So any Image objects or category labels must be converted to activations or 1 of K neural
+   representations (respectively).
+*)
+
+
+(* Note you should be cautious using this function applied to large datasets with
+   a large and complex neural network. Memory usage may be excessive.
+   Consider using the partition'd version ForwardPropogate instead
+*)
+CNForwardPropogateInternal[inputs_List,network_]:=
+   Last[CNForwardPropogateLayers[inputs,network]];
+
+
+CNForwardPropogateLayers::usage = "CNForwardPropogateLayers[inputs,network] runs inputs
+through the network and returns the output of each layer. Note you should be cautious using
+this with large multi layer nets with a large number of input examples due to excessive
+memory usage. (Consider using smaller #inputs)";
+CNForwardPropogateLayers[inputs_List,network_]:=
+   Rest[FoldList[CNForwardPropogateLayer[#2,#1]&,inputs,network]];
 
 
 CNRegressionLoss[model_,testSet_] := (

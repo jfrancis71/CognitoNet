@@ -3,6 +3,65 @@
 (* Training Logic *)
 
 
+Options[CNMiniBatchTrainModel]=Options[CNMiniBatchTrainModelInternal];
+CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
+   CNMiniBatchTrainModelInternal[ model,
+      MapThread[#1->#2&,{CNToActivations[trainingSet[[All,1]]],trainingSet[[All,2]]}],
+      lossF,
+      Append[ FilterRules[{opts}, Except[ValidationSet]],
+         ValidationSet->MapThread[#1->#2&,{
+            CNToActivations[OptionValue[ValidationSet][[All,1]]],
+            OptionValue[ValidationSet][[All,2]]}
+]] ]
+
+
+CNTrainModel::usage = "CNTrainModel[ network, trainingSet, lossF, opts ] trains a
+neural network by gradient descent (not mini batch).
+Options are:
+   MaxEpoch->1000
+   LearningRate->.01
+   MomentumDecay->0
+   MomentumType->None
+";
+Options[CNTrainModel] = Join[CNDefaultTrainingOptions,{ValidationSet->{}}];
+CNTrainModel[ network_, trainingSet_, lossF_, opt:OptionsPattern[] ] :=
+   CNMiniBatchTrainModel[ network, trainingSet, lossF, {opt,BatchSize->Length[trainingSet]} ]
+
+
+Options[CNMiniBatchTrainCategoricalModel]=Options[CNMiniBatchTrainModel];
+CNMiniBatchTrainCategoricalModel[model_,trainingSet_,lossF_, categoryList_,
+opts:OptionsPattern[]] :=
+   CNMiniBatchTrainModel[ model, CNTrainingSetTo1OfK[trainingSet, categoryList], lossF,
+      Append[ FilterRules[opts,Except[ValidationSet]],
+         ValidationSet->CNTrainingSetTo1OfK[ OptionValue[ValidationSet], categoryList ] ] ];
+
+
+Options[CNTrainCategoricalModel] = Options[ CNTrainModel ];
+CNTrainCategoricalModel[ network_, trainingSet_, lossF_, categoryList_,
+opt:OptionsPattern[] ] :=
+   CNMiniBatchTrainCategoricalModel[ network, trainingSet, lossF, categoryList, opt ]
+
+
+CNTargetsTo1OfK[targets_,categoryList_]:=
+   Map[
+      ReplacePart[ConstantArray[0,Length[categoryList]],Position[categoryList,#][[1,1]]->1]&,
+      targets];
+
+
+CNTrainingSetTo1OfK[trainingSet_,categoryList_]:=
+   MapThread[#1->#2&,{
+      trainingSet[[All,1]],
+      CNTargetsTo1OfK[ trainingSet[[All,2]], categoryList ] }];
+
+
+(*
+   ALL Code Below this point has no knowledge of Mathematica Image structures, categories, etc
+   It only knows about neural networks, activations and network parameters.
+   So any Image objects or category labels must be converted to activations or 1 of K neural
+   representations (respectively).
+*)
+
+
 CNLayerWeightPlus[ networkLayers_List, grad_List ] :=
    MapThread[ CNLayerWeightPlus, { networkLayers, grad } ]
 
@@ -153,62 +212,6 @@ CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] 
 ];
 
 
-CNTargetsTo1OfK[targets_,categoryList_]:=
-   Map[
-      ReplacePart[ConstantArray[0,Length[categoryList]],Position[categoryList,#][[1,1]]->1]&,
-      targets];
-
-
-CNTrainingSetTo1OfK[trainingSet_,categoryList_]:=
-   MapThread[#1->#2&,{
-      trainingSet[[All,1]],
-      CNTargetsTo1OfK[ trainingSet[[All,2]], categoryList ] }];
-
-
-Options[CNMiniBatchTrainModel]=Options[CNMiniBatchTrainModelInternal];
-CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
-   CNMiniBatchTrainModelInternal[ model,
-      MapThread[#1->#2&,{CNToActivations[trainingSet[[All,1]]],trainingSet[[All,2]]}],
-      lossF,
-      Append[ FilterRules[{opts}, Except[ValidationSet]],
-         ValidationSet->MapThread[#1->#2&,{
-            CNToActivations[OptionValue[ValidationSet][[All,1]]],
-            OptionValue[ValidationSet][[All,2]]}
-]] ]
-
-
-CNTrainModel::usage = "CNTrainModel[ network, trainingSet, lossF, opts ] trains a
-neural network by gradient descent (not mini batch).
-Options are:
-   MaxEpoch->1000
-   LearningRate->.01
-   MomentumDecay->0
-   MomentumType->None
-";
-Options[CNTrainModel] = Join[CNDefaultTrainingOptions,{ValidationSet->{}}];
-CNTrainModel[ network_, trainingSet_, lossF_, opt:OptionsPattern[] ] :=
-   CNMiniBatchTrainModel[ network, trainingSet, lossF, {opt,BatchSize->Length[trainingSet]} ]
-
-
-Options[CNMiniBatchTrainCategoricalModel]=Options[CNMiniBatchTrainModel];
-CNMiniBatchTrainCategoricalModel[model_,trainingSet_,lossF_, categoryList_,
-opts:OptionsPattern[]] :=
-   CNMiniBatchTrainModel[ model, CNTrainingSetTo1OfK[trainingSet, categoryList], lossF,
-      Append[ FilterRules[opts,Except[ValidationSet]],
-         ValidationSet->CNTrainingSetTo1OfK[ OptionValue[ValidationSet], categoryList ] ] ];
-
-
-Options[CNTrainCategoricalModel] = Options[ CNTrainModel ];
-CNTrainCategoricalModel[ network_, trainingSet_, lossF_, categoryList_,
-opt:OptionsPattern[] ] :=
-   CNMiniBatchTrainCategoricalModel[ network, trainingSet, lossF, categoryList, opt ]
-
-
-CNCheckGrad[weight_,network_, testSet_,lossF_,epsilon_:10^-6]:=
-   (lossF[ReplacePart[network,weight->Extract[network,weight]+epsilon], testSet]-
-   lossF[network, testSet])/epsilon
-
-
 (* Loss Functions *)
 
 
@@ -217,3 +220,8 @@ CNDeltaLoss[CNRegressionLoss1D,outputs_,targets_]:=2.0*(outputs-targets)/Length[
 CNDeltaLoss[CNCrossEntropyLoss,outputs_,targets_]:=-((-(1-targets)/(1-outputs)) +
    (targets/outputs))/Length[outputs];
 CNDeltaLoss[CNCategoricalLoss,outputs_,targets_]:=-targets*(1.0/outputs)/Length[outputs];
+
+
+CNCheckGrad[weight_,network_, testSet_,lossF_,epsilon_:10^-6]:=
+   (lossF[ReplacePart[network,weight->Extract[network,weight]+epsilon], testSet]-
+   lossF[network, testSet])/epsilon
