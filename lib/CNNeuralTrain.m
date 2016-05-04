@@ -170,7 +170,7 @@ CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
    CNMiniBatchTrainModelInternal[ model,
       MapThread[#1->#2&,{CNToActivations[trainingSet[[All,1]]],trainingSet[[All,2]]}],
       lossF,
-      Append[ FilterRules[opts, Except[ValidationSet]],
+      Append[ FilterRules[{opts}, Except[ValidationSet]],
          ValidationSet->MapThread[#1->#2&,{
             CNToActivations[OptionValue[ValidationSet][[All,1]]],
             OptionValue[ValidationSet][[All,2]]}
