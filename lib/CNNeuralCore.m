@@ -114,7 +114,7 @@ CNClassifyCategoricalModel[inputs_ ,network_List, categoryLabels_]:= (
 
 
 CNCategoricalClassificationAccuracy::usage = "
-CNClassificationPerformance[inputs,targetLabels,net,categoryMap]
+CNClassificationAccuracy[inputs,targetLabels,net,categoryMap]
 returns fraction of input examples labelled correctly.
 CNClassificationPerformance[testSet,net,categoryMap]
 returns fraction of test set labelled correctly.
