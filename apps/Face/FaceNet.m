@@ -18,12 +18,12 @@ Responsivess is strongest for full face in crop'd image, ie chin near bottom of 
 CNFaceDetection[mirror_,spaces_,chartStyleF_:Function[patch,Green]] :=
    Module[{cropImage},
       CNCameraMainLoop[(
-         cropImage=Map[Reverse,ImageData[#,DataReversed->True][[24-15;;24+16,32-15;;32+16]]];
+         cropImage=Map[Reverse,ImageData[#][[24-15;;24+16,32-15;;32+16]]];
          If[mirror==False,cropImage=Map[Reverse,cropImage]];
          {
             StringJoin[ConstantArray[" ",spaces]],
             BarChart[CNForwardPropogate[{cropImage},FaceNet],PlotRange->{0,1},ChartStyle->chartStyleF[cropImage]],
-            cropImage//Raster//Graphics})&
+            Show[cropImage//Image,ImageSize->Medium]})&
       ,64]
    ]
 
@@ -31,10 +31,10 @@ CNFaceDetection[mirror_,spaces_,chartStyleF_:Function[patch,Green]] :=
 CNFaceWithGenderDetection::usage = "CNFaceWithGenderDetection[mirror,spaces] performs same function as CNFaceDetection
 but adds an attempt to determine gender which is displayed using the color of the bounding boxes.";
 CNFaceWithGenderDetection[mirror_,spaces_] :=
-   CNFaceDetection[mirror,spaces,Function[image,Blend[{Pink,Blue},CNForwardPropogate[{image},GenderNet][[1,1]]]]]
+   CNFaceDetection[mirror,spaces,Function[image,Blend[{Pink,Blue},CNForwardPropogate[{image},GenderNet][[1]]]]]
 
 
-CNGetPatch[image_,coords_] := Image[ImageData[image,DataReversed->True][[coords[[2]]-16;;coords[[2]]+15,coords[[1]]-16;;coords[[1]]+15]]//Reverse]
+CNGetPatch[image_,coords_] := Image[ImageData[image][[coords[[2]]-16;;coords[[2]]+15,coords[[1]]-16;;coords[[1]]+15]]]
 
 
 (*
@@ -54,12 +54,12 @@ using FaceNet neural network. The faces are assumed to fit within a 32*32 slidin
 CNFaceLocalizationConvolve[image_?CNImageQ,colorStyleF_] := (
    HackedFaceNetConvolve1 = Append[
       Delete[FaceNet,{{1},{5},{9}}][[1;;9]],
-      ConvolveFilterBankTo2D[0.,unflatten[FaceNet[[-2,2,1]],{64,4,4}]]];
+      ConvolveFilterBankTo2D[0.,unflatten[FaceNet[[-2,2]],{64,4,4}]]];
    facemap = CNLogisticFn[-7.503736 + CNForwardPropogate[image,HackedFaceNetConvolve1]];
    extractFacePositions = Position[facemap,q_/;q>.5];
    originalCoordsFacePositions = Map[(({#[[2]],#[[1]]}-{1,1})*8+{14,14} + {16,16})&,extractFacePositions];
-   filteredFacePositions = Select[originalCoordsFacePositions,CNPriorAdjustment[0.5,1./301,CNForwardPropogate[CNGetPatch[image,#],FaceNet][[1]]]>.5&];
-   Map[CNOutlineGraphics[CNBoundingRectangles[{#},{16,16}],colorStyleF[CNGetPatch[image,#]]]&,filteredFacePositions]
+   filteredFacePositions = Select[originalCoordsFacePositions,CNPriorAdjustment[0.5,1./301,CNForwardPropogate[CNGetPatch[image,#],FaceNet]]>.5&];
+   Map[CNOutlineGraphics[CNBoundingRectangles[{{#[[1]],ImageDimensions[image][[2]]-#[[2]]}},{16,16}],colorStyleF[CNGetPatch[image,#]]]&,filteredFacePositions]
 );
 
 
@@ -75,7 +75,7 @@ CNFaceLocalization[image_?CNImageQ,colorStyleF_:Function[{patch},Green]] := (
 
 CNFaceWithGenderLocalization::usage = "CNFaceWithGenderLocalization[cnimage] searches for faces at multipe scales within the image and attempts gender recognition.";
 CNFaceWithGenderLocalization[image_?CNImageQ] :=
-   CNFaceLocalization[image,Function[{patch},Blend[{Pink,Blue},CNForwardPropogate[patch,GenderNet][[1]]]]]
+   CNFaceLocalization[image,Function[{patch},Blend[{Pink,Blue},CNForwardPropogate[patch,GenderNet]]]]
 
 
 (*
