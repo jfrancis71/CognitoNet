@@ -122,7 +122,7 @@ CNStepGradientDescent[ {state_, velocity_}, gradF_, plusF_, momentumDecay_, mome
 )
 
 
-SyntaxInformation[MomentumDecay]={"ArgumentsPattern"->{}};
+SyntaxInformation[Momentum]={"ArgumentsPattern"->{}};
 SyntaxInformation[MomentumType]={"ArgumentsPattern"->{}};
 SyntaxInformation[StepSize]={"ArgumentsPattern"->{}};
 Options[CNGradientDescent]={

@@ -20,7 +20,7 @@ neural network by gradient descent (not mini batch).
 Options are:
    MaxEpoch->1000
    LearningRate->.01
-   MomentumDecay->0
+   Momentum->0
    MomentumType->None
 ";
 Options[CNTrainModel] = Join[CNDefaultTrainingOptions,{ValidationSet->{}}];
@@ -158,7 +158,7 @@ SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
 CNDefaultTrainingOptions={
    MaxEpoch->1000,
    LearningRate->.01,
-   MomentumDecay->.0,
+   Momentum->.0,
    MomentumType->"None",
    EpochMonitor:>Function[{},0]};
 
@@ -171,7 +171,7 @@ opts:OptionsPattern[] ] := (
    Scan[
       Function[batch,{state,vel} = CNStepGradientDescent[{state, vel},
          CNGrad[ #, batch[[All,1]],batch[[All,2]], lossF ]&,
-         CNLayerWeightPlus,OptionValue[MomentumDecay],OptionValue[MomentumType],
+         CNLayerWeightPlus,OptionValue[Momentum],OptionValue[MomentumType],
             OptionValue[LearningRate]];
       partialTrainingLoss = lossF[ state, batch];],
       Partition[trainingSet,OptionValue[BatchSize],OptionValue[BatchSize],1,{}]
@@ -180,7 +180,6 @@ opts:OptionsPattern[] ] := (
 );
 
 
-SyntaxInformation[ValidationSet]={"ArgumentsPattern"->{}};
 Options[CNMiniBatchTrainModelInternal] = Join[CNDefaultTrainingOptions,{BatchSize->100,
    ValidationSet->{}}];
 CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
