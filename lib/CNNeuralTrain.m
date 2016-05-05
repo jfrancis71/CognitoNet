@@ -3,7 +3,19 @@
 (* Training Logic *)
 
 
-Options[CNMiniBatchTrainModel]=Options[CNMiniBatchTrainModelInternal];
+SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{_}};
+SyntaxInformation[LearningRate]={"ArgumentsPattern"->{_}};
+SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
+CNDefaultTrainingOptions={
+   MaxEpoch->1000,
+   LearningRate->.01,
+   Momentum->.0,
+   MomentumType->"None",
+   EpochMonitor:>Function[{},0],
+   ValidationSet->{}};
+
+
+Options[CNMiniBatchTrainModel] = Append[ Options[CNDefaultTrainingOptions], BatchSize->100 ];
 CNMiniBatchTrainModel[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
    CNMiniBatchTrainModelInternal[ model,
       MapThread[#1->#2&,{CNToActivations[trainingSet[[All,1]]],trainingSet[[All,2]]}],
@@ -23,7 +35,7 @@ Options are:
    Momentum->0
    MomentumType->None
 ";
-Options[CNTrainModel] = Join[CNDefaultTrainingOptions,{ValidationSet->{}}];
+Options[CNTrainModel] = Options[CNDefaultTrainingOptions];
 CNTrainModel[ network_, trainingSet_, lossF_, opt:OptionsPattern[] ] :=
    CNMiniBatchTrainModel[ network, trainingSet, lossF, {opt,BatchSize->Length[trainingSet]} ]
 
@@ -152,19 +164,8 @@ CNGrad[model_,inputs_,targets_,lossF_] := (
 );
 
 
-SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{_}};
-SyntaxInformation[LearningRate]={"ArgumentsPattern"->{_}};
-SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
-CNDefaultTrainingOptions={
-   MaxEpoch->1000,
-   LearningRate->.01,
-   Momentum->.0,
-   MomentumType->"None",
-   EpochMonitor:>Function[{},0]};
-
-
 SyntaxInformation[BatchSize]={"ArgumentsPattern"->{_}};
-Options[CNMiniBatchTrainForOneEpoch]=Append[CNDefaultTrainingOptions,BatchSize->100];
+Options[CNMiniBatchTrainForOneEpoch] = Options[CNMiniBatchTrainModel];
 CNMiniBatchTrainForOneEpoch[ {network_, velocity_ }, trainingSet_, lossF_,
 opts:OptionsPattern[] ] := (
    { state, vel } = { network, velocity };
@@ -180,8 +181,7 @@ opts:OptionsPattern[] ] := (
 );
 
 
-Options[CNMiniBatchTrainModelInternal] = Join[CNDefaultTrainingOptions,{BatchSize->100,
-   ValidationSet->{}}];
+Options[CNMiniBatchTrainModelInternal] = Options[CNMiniBatchTrainModel];
 CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] :=
    Module[{grOutput={}},
       TrainingHistory = {}; ValidationHistory={};
