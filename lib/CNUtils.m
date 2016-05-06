@@ -126,7 +126,7 @@ SyntaxInformation[Momentum]={"ArgumentsPattern"->{}};
 SyntaxInformation[MomentumType]={"ArgumentsPattern"->{}};
 SyntaxInformation[StepSize]={"ArgumentsPattern"->{}};
 Options[CNGradientDescent]={
-   MomentumDecay->.0,
+   Momentum->.0,
    MomentumType->"CM",
    StepSize->.01,
    StepMonitor:>(#&)};
@@ -134,7 +134,7 @@ CNGradientDescent::usage = "NGradientDescent[state_, gradF_, plusF_, iterations_
 performs gradient descent.";
 CNGradientDescent[state_,gradF_,plusF_,iterations_,opts:OptionsPattern[]] :=
    First[Nest[(
-      updateStep=CNStepGradientDescent[#,gradF,plusF,OptionValue[MomentumDecay],
+      updateStep=CNStepGradientDescent[#,gradF,plusF,OptionValue[Momentum],
          OptionValue[MomentumType],OptionValue[StepSize]];
       OptionValue[StepMonitor][First[updateStep]];updateStep)&,
       {state,gradF[state]*0.0}, (* needed as if velocity has complex structure it will be
