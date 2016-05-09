@@ -39,7 +39,7 @@ CNDescription[network_,input_] := Module[
    MapThread[
       CNLayerDescription[#1]<>" with " <> 
          ToString[CNLayerNumberParameters[#1]] <> " parameter(s) and " <> 
-         ToString[Length[Flatten[#2]]] <> " neurons"&,
+         ToString[Length[Flatten[#2]]] <> " neurons"  <> " of structure " <> ToString[Dimensions[#2[[1]]]]&,
       {network,forward}]//MatrixForm,
    "Total of " <> ToString[Total[Map[CNLayerNumberParameters,network]]] <> 
       " parameters and " <> ToString[Length[Flatten[forward]]] <> 
