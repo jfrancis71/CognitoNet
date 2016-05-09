@@ -62,8 +62,17 @@ CNImportMovie[file_String,width_Integer] :=
    CNImportMovie[file,width, CNMovieLength[file]];
 CNImportMovie[file_String,width_Integer,frames_Integer] :=
    Flatten[Map[
-      Map[Function[conv,CNImportImage[conv,width]],Import[file,{"Frames",#}]]&,
-         Partition[Range[frames],10,10,1,{}]],1];
+      Map[Function[conv,CNImportImage[conv,width]],
+(* Import treats framelist as a single frame if it is a list of
+   length 1. Branch here corrects for that. *)
+         If[Length[#]==1,
+            {Import[file,{"Frames",#}]},
+            Import[file,{"Frames",#}]]]&,
+         re=Partition[Range[frames],10,10,1,{}]],1];
+
+
+
+
 
 
 (*
