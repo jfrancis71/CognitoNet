@@ -68,7 +68,7 @@ CNImportMovie[file_String,width_Integer,frames_Integer] :=
          If[Length[#]==1,
             {Import[file,{"Frames",#}]},
             Import[file,{"Frames",#}]]]&,
-         re=Partition[Range[frames],10,10,1,{}]],1];
+         re=Partition[Range[frames],100,100,1,{}]],1];
 
 
 
