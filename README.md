@@ -16,6 +16,9 @@ The package extends the machine learning capabilities of Mathematica (introduced
 
 The main application area so far is computer vision. In principle it could be of use in any other area where a feed forward neural network is applicable.
 
+Use of this package assumes some familiarity with the concepts of a convolutional neural network, eg you have been following Geoffrey Hinton's Coursera course on neural networks (https://www.coursera.org/), or [Nando de Freitas Deep Learning Course](https://www.youtube.com/watch?v=PlhFWT7vAEw&list=PLE6Wd9FR--EfW8dtjAuPoTuPcqmOV53Fu&index=16) or you have equivalent knowledge.
+
+
 Example neural nets include:
 
  - [MNIST](https://github.com/jfrancis71/CognitoNet/wiki/MNIST)
