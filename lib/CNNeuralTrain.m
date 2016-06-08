@@ -142,13 +142,15 @@ CNGrad[model_,inputs_,targets_,lossF_] := (
    CNAssertAbort[Length[inputs]==Length[targets],
       "CNGrad::# of Training Labels should equal # of Training Inputs"];
 
-   L = CNTimer["CNForwardPropogateLayers",CNForwardPropogateLayers[inputs, model]];
+   dropoutModel = Dropout[ model, inputs];
+
+   L = CNTimer["CNForwardPropogateLayers",CNForwardPropogateLayers[inputs, dropoutModel]];
    CNAssertAbort[Dimensions[L[[-1]]]==Dimensions[targets],
       "NNGrad::Dimensions of outputs and targets should match"];
 
    CNTimer["BackPropogate Total",
       xDelta = CNBackPropogateLayers[
-         model,
+         dropoutModel,
          L,
          CNDeltaLoss[lossF,L[[-1]],targets]];];
 
@@ -156,10 +158,10 @@ CNGrad[model_,inputs_,targets_,lossF_] := (
    CNTimer["LayerGrad",
    Prepend[
       Table[
-         CNTimer["LayerGrad::"<>CNLayerDescription[model[[layerIndex]]],
-            CNGradLayer[model[[layerIndex]],L[[layerIndex-1]],xDelta[[layerIndex]]]]
-         ,{layerIndex,2,Length[model]}],
-      CNGradLayer[model[[1]],inputs,xDelta[[1]]]
+         CNTimer["LayerGrad::"<>CNLayerDescription[dropoutModel[[layerIndex]]],
+            CNGradLayer[dropoutModel[[layerIndex]],L[[layerIndex-1]],xDelta[[layerIndex]]]]
+         ,{layerIndex,2,Length[dropoutModel]}],
+      CNGradLayer[dropoutModel[[1]],inputs,xDelta[[1]]]
    ]]
 );
 
