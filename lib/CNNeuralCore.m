@@ -129,7 +129,7 @@ through the network and returns the output of each layer. Note you should be cau
 this with large multi layer nets with a large number of input examples due to excessive
 memory usage. (Consider using smaller #inputs)";
 CNForwardPropogateLayers[inputs_List,network_]:=
-   Rest[FoldList[CNForwardPropogateLayer[#2,#1]&,inputs,network]];
+   Rest[FoldList[CNTimer["Forward Layer "<>CNLayerDescription[ #2 ],CNForwardPropogateLayer[#2,#1]]&,inputs,network]];
 
 
 CNRegressionLoss[model_,testSet_] := (
