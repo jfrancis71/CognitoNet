@@ -111,6 +111,10 @@ CNForwardPropogateLayer[ConvolveFilterBankTo2D[bias_,kernels_],inputs_] := (
 to #Features ("<>ToString[Length[inputs[[1]]]]<>") in input feature map"];
    bias+Sum[ListCorrelate[{kernels[[kernel]]},inputs[[All,kernel]]],
       {kernel,1,Length[kernels]}]);
+ConvolveFilterBankTo2DInit[noOldFilterBank_,filterSize_] :=
+      ConvolveFilterBankTo2D[0.,
+            Table[Random[]-.5,{noOldFilterBank},{filterSize},{filterSize}]/
+               Sqrt[noOldFilterBank*filterSize*filterSize]]
 CNBackPropogateLayer[ConvolveFilterBankTo2D[bias_,kernels_],postLayerDeltaA_,_,_] := (
    Transpose[Table[ListConvolve[{kernels[[w]]},postLayerDeltaA,{+1,-1},0],
       {w,1,Length[kernels]}],{2,1,3,4}]);
@@ -135,7 +139,7 @@ SyntaxInformation[ConvolveFilterBankToFilterBank]={"ArgumentsPattern"->{_}};
 *)
 CNForwardPropogateLayer[ConvolveFilterBankToFilterBank[filters_],inputs_] :=
    Module[{i1,i2,i3},
-      i1 = Map[Partition[#,{5,5},{1,1}]&,inputs,{2}];
+      i1 = Map[Partition[#,Dimensions[filters[[1,2,1]]],{1,1}]&,inputs,{2}];
       i2=(Map[Flatten,
             Transpose[i1,{1,4,2,3,5,6}],{3}].
          Transpose[Map[Flatten,filters[[All,2]]]]);
@@ -216,6 +220,7 @@ CNLayerWeightPlus[MaxPoolingFilterBankToFilterBank,grad_] :=
 CNLayerNumberParameters[MaxPoolingFilterBankToFilterBank] := 0;
 
 
+Needs["Developer`"]
 (*
    Layer: MaxConvolveFilterBankToFilterBank
 *)
@@ -309,6 +314,30 @@ CNBackPropogateLayer[PadFilterBank[padding_],postLayerDeltaA_,_,_]:=
 CNGradLayer[PadFilterBank[padding_],layerInputs_,layerOutputDelta_]:={};
 CNLayerWeightPlus[PadFilterBank[padding_],grad_]:=PadFilterBank[padding];
 CNLayerNumberParameters[PadFilterBank[padding_]] := 0;
+
+
+(*
+   Layer: LogSumExp
+   Bit like a smooth approximation of a max function
+   Ref: https://en.wikipedia.org/wiki/LogSumExp
+
+   Ref: http://arxiv.org/pdf/1411.6228v3.pdf
+   From Image-level to Pixel-level Labelling with Convolutional Networks
+   Pinheiro and Collobert
+
+   My motivational use was for the NoEntry traffic detector where there is positional uncertainty.
+   I model as either traffic sign not present or probability as present is sum of probabilities over all
+   locations where it could be present. If you take the softmax function and then model over this sum
+   you end up with a LogSumExp function (wiht probabilities in the log domain).
+*)
+SyntaxInformation[LogSumExp] = {"ArgumentsPattern"->{_}};
+CNForwardPropogateLayer[LogSumExp,inputs_] :=
+   Map[Log[Total[Exp[#]]]&,inputs];
+CNBackPropogateLayer[LogSumExp,postLayerDeltaA_,inputs_,outputs_]:=
+   Table[postLayerDeltaA[[ex]]*Exp[inputs[[ex]]]/Total[Exp[inputs[[ex]]]],{ex,1,Length[postLayerDeltaA]}];
+CNGradLayer[LogSumExp,layerInputs_,layerOutputDelta_]:={};
+CNLayerWeightPlus[LogSumExp,grad_]:=LogSumExp;
+CNLayerNumberParameters[LogSumExp] := 0;
 
 
 (*
