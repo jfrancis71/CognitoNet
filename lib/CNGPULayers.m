@@ -48,7 +48,7 @@ __global__ void GPUConvolveFilterBankTo2D( float* input, float* filterBank, floa
 __global__ void GPUConvolveFilterBankToFilterBank( float* input, float* filterBanks, float* output, mint examples, mint srcfilters, mint dstfilters, mint srcHeight, mint srcWidth, mint filterSize )
 {
    for ( int dfilter = 0 ; dfilter < dstfilters ; dfilter++ )
-      d_GPUConvolveFilterBankTo2D( input, filterBanks + dfilter*32*5*5, output + dfilter*examples*(srcHeight-5+1)*(srcWidth-5+1), examples, srcfilters, srcHeight, srcWidth, filterSize );
+      d_GPUConvolveFilterBankTo2D( input, filterBanks + dfilter*srcfilters*5*5, output + dfilter*examples*(srcHeight-5+1)*(srcWidth-5+1), examples, srcfilters, srcHeight, srcWidth, filterSize );
 }
 
 __global__ void GPUConvolve2DToFilterBank( float* input, float* filterBanks, float* output, mint examples, mint filters, mint srcHeight, mint srcWidth, mint filterSize )
