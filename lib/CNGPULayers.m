@@ -109,6 +109,9 @@ CNForwardPropogateLayer[GPUConvolveFilterBankTo2D,inputs_] := (
    CUDAMemoryUnload[output];CUDAMemoryUnload[input];CUDAMemoryUnload[gpuFilterBank];
    res
 );
+CNBackPropogateLayer[GPUConvolveFilterBankTo2D[bias_,kernels_],postLayerDeltaA_,_,_] := CNBackPropogateLayer[ConvolveFilterBankTo2D[bias,kernels],postLayerDeltaA,_,_];
+CNGradLayer[GPUConvolveFilterBankTo2D[bias_,kernels_],layerInputs_,layerOutputDelta_] := CNGradLayer[ConvolveFilterBankTo2D[bias,kernels],layerInputs,layerOutputDelta];
+CNLayerWeightPlus[networkLayer_GPUConvolveFilterBankTo2D,grad_] := CNLayerWeightPlus[networkLayer,grad]
 
 
 CNForwardPropogateLayer[GPUConvolveFilterBankToFilterBank[filters_],inputs_] := ( 
@@ -126,6 +129,9 @@ CNForwardPropogateLayer[GPUConvolveFilterBankToFilterBank[filters_],inputs_] := 
    CUDAMemoryUnload[output];CUDAMemoryUnload[input];CUDAMemoryUnload[gpuFilterBanks];
    Transpose[MapThread[#1+#2&,{res,filters[[All,1]]}],{2,1,3,4}]
 );
+CNBackPropogateLayer[ GPUConvolveFilterBankToFilterBank[filters_], postLayerDeltaA_,inputs_, outputs_] := CNBackPropogateLayer[ConvolveFilterBankToFilterBank[filters], postLayerDeltaA, inputs, outputs];
+CNGradLayer[ GPUConvolveFilterBankToFilterBank[filters_], layerInputs_, layerOutputDelta_] := CNGradLayer[ConvolveFilterBankToFilterBank[filters],layerInputs,layerOutputDelta];
+CNLayerWeightPlus[ GPUConvolveFilterBankToFilterBank[filters_], grad_] := CNLayerWeightPlus[ConvolveFilterBankToFilterBank[filters],grad] 
 
 
 CNForwardPropogateLayer[GPUConvolve2DToFilterBank[filters_],inputs_] := ( 
@@ -143,6 +149,12 @@ CNForwardPropogateLayer[GPUConvolve2DToFilterBank[filters_],inputs_] := (
    CUDAMemoryUnload[output];CUDAMemoryUnload[input];CUDAMemoryUnload[gpuFilterBanks];
    Transpose[MapThread[#1+#2&,{res,filters[[All,1]]}],{2,1,3,4}]
 );
+CNBackPropogateLayer[ GPUConvolve2DToFilterBank[filters_],postLayerDeltaA_,inputs_,outputs_] := 
+   CNBackPropogateLayer[Convolve2DToFilterBank[filters],postLayerDeltaA,inputs,outputs];
+CNGradLayer[ GPUConvolve2DToFilterBank[filters_],layerInputs_,layerOutputDelta_] :=
+   CNGradLayer[Convolve2DToFilterBank[filters],layerInputs,layerOutputDelta];
+CNLayerWeightPlus[networkLayer_Convolve2DToFilterBank,grad_] :=
+   CNLayerWeightPlus[networkLayer,grad];
 
 
 CNForwardPropogateLayer[GPUMaxPoolingFilterBankToFilterBank, inputs_] := (
@@ -155,7 +167,12 @@ CNForwardPropogateLayer[GPUMaxPoolingFilterBankToFilterBank, inputs_] := (
    GPUMaxPoolingFilterBankToFilterBankFn[ input, output, Length[inputs], Length[inputs[[1]]], srcHeight, srcWidth, {outputWidth,outputHeight} ];
    res = unflatten[CUDAMemoryGet[output], {Length[inputs], Length[inputs[[1]]],outputHeight,outputWidth}];
    CUDAMemoryUnload[output];CUDAMemoryUnload[input];
-   res)
+   res);
+CNBackPropogateLayer[ GPUMaxPoolingFilterBankToFilterBank,postLayerDeltaA_,layerInputs_, layerOutputs_] :=
+   CNBackPropogateLayer[MaxPoolingFilterBankToFilterBank,postLayerDeltaA,layerInputs,layerOutputs];
+CNGradLayer[ GPUMaxPoolingFilterBankToFilterBank,layerInputs_,layerOutputDelta_] :=
+   CNGradLayer[MaxPoolingFilterBankToFilterBank,layerInputs,layerOutputDelta];
+CNLayerWeightPlus[ GPUMaxPoolingFilterBankToFilterBank, grad_] := CNLayerWeightPlus[MaxPoolingFilterBankToFilterBank,grad]
 
 
 CNConvertCPUToGPU[net_] := Map[CNConvertCPUToGPULayer,net];
