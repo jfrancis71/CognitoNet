@@ -6,14 +6,7 @@
 Needs["CUDALink`"];
 
 
-GPUConvolveFilterBankTo2DCode="
-
-__device__ void gputest( int f, int* t )
-{
-   *t = f;
-}
-
-
+GPUCode="
 
 __device__ void d_GPUConvolveFilterBankTo2D( float* input, float* filterBank, float* output, mint examples, mint filters, mint srcHeight, mint srcWidth, mint filterSize )
 {
@@ -99,10 +92,10 @@ __global__ void GPUMaxPoolingFilterBankToFilterBank( float* input, float* output
 
 CNGPUInitialize[]:=
 ( 
-   GPUConvolveFilterBankTo2DFn = CUDAFunctionLoad[GPUConvolveFilterBankTo2DCode , "GPUConvolveFilterBankTo2D", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
-   GPUConvolveFilterBankToFilterBankFn = CUDAFunctionLoad[GPUConvolveFilterBankTo2DCode , "GPUConvolveFilterBankToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
-   GPUConvolve2DToFilterBankFn = CUDAFunctionLoad[GPUConvolveFilterBankTo2DCode , "GPUConvolve2DToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
-   GPUMaxPoolingFilterBankToFilterBankFn = CUDAFunctionLoad[GPUConvolveFilterBankTo2DCode , "GPUMaxPoolingFilterBankToFilterBank", {{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer},{28,28}];
+   GPUConvolveFilterBankTo2DFn = CUDAFunctionLoad[GPUCode , "GPUConvolveFilterBankTo2D", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
+   GPUConvolveFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUConvolveFilterBankToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
+   GPUConvolve2DToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUConvolve2DToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
+   GPUMaxPoolingFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUMaxPoolingFilterBankToFilterBank", {{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer},{28,28}];
 )
 
 
