@@ -341,6 +341,19 @@ CNLayerNumberParameters[LogSumExp] := 0;
 
 
 (*
+   Layer: Max1D
+*)
+SyntaxInformation[Max1D] = {"ArgumentsPattern"->{_}};
+CNForwardPropogateLayer[Max1D,inputs_] :=
+   Map[Max,inputs];
+CNBackPropogateLayer[Max1D,postLayerDeltaA_,inputs_,outputs_]:=
+   Table[postLayerDeltaA[[ex]]*UnitStep[outputs-inputs],{ex,1,Length[postLayerDeltaA]}];
+CNGradLayer[Max1D,layerInputs_,layerOutputDelta_]:={};
+CNLayerWeightPlus[Max1D,grad_]:=Max1D;
+CNLayerNumberParameters[Max1D] := 0;
+
+
+(*
    Layer: SubsampleFilterBankToFilterBank
 *)
 SyntaxInformation[SubsampleFilterBankToFilterBank] = {"ArgumentsPattern"->{}};
