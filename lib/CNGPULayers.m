@@ -89,6 +89,30 @@ I hope there aren't any memory overspills or race conditions! */
    }
 }
 
+__global__ void GPUBackPropogateMaxConvolveFilterBankToFilterBank( float* input, float* output, float* postLayerDeltaA, float* preLayerDeltaA, mint examples, mint filters, mint height, mint width )
+{
+   int x = threadIdx.x + blockIdx.x * blockDim.x;
+   int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+   if ( x >= width ) return;
+   if ( y >= height ) return;
+
+   for ( int ex = 0 ; ex < examples ; ex++ )
+      for ( int f = 0 ; f < filters ; f++ )
+      {
+         float accum = 0.0;
+         for ( int ty = -1 ; ty <= 1 ; ty++ )
+            for ( int tx = -1 ; tx <= 1 ; tx++ )
+               if ( y+ty >= 0 && y+ty < height && x+tx >=0 && x+tx < width &&
+                     input[ ex*filters*height*width + f*height*width + y*width + x ] == output[ex*filters*height*width + f*height*width + (y+ty)*width + x+tx] )
+                  accum += postLayerDeltaA[ ex*filters*height*width + f*height*width + (y+ty)*width + x+tx];
+
+         preLayerDeltaA[ ex*filters*height*width + f*height*width + y*width + x] = accum;
+      }
+}
+      
+
+
 __global__ void GPUConvolve2DToFilterBank( float* input, float* filterBanks, float* output, mint examples, mint filters, mint srcHeight, mint srcWidth, mint filterSize )
 {
    for ( int dfilter = 0 ; dfilter < filters ; dfilter++ )
@@ -135,6 +159,7 @@ CNGPUInitialize[]:=
    GPUBackPropogateConvolveFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUBackPropogateConvolveFilterBankToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
    GPUConvolve2DToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUConvolve2DToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
    GPUMaxPoolingFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUMaxPoolingFilterBankToFilterBank", {{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer},{28,28}];
+   GPUBackPropogateMaxConvolveFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUBackPropogateMaxConvolveFilterBankToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer},{28,28}];
 )
 
 
@@ -229,8 +254,25 @@ CNGradLayer[ GPUMaxPoolingFilterBankToFilterBank,layerInputs_,layerOutputDelta_]
 CNLayerWeightPlus[ GPUMaxPoolingFilterBankToFilterBank, grad_] := ReplacePart[CNLayerWeightPlus[MaxPoolingFilterBankToFilterBank,grad],0->GPUMaxPoolingFilterBankToFilterBank];
 
 
+CNForwardPropogateLayer[GPUMaxConvolveFilterBankToFilterBank, inputs_] :=
+   CNForwardPropogateLayer[ MaxConvolveFilterBankToFilterBank, inputs ]
+CNBackPropogateLayer[ GPUMaxConvolveFilterBankToFilterBank,postLayerDeltaA_,layerInputs_, layerOutputs_] := (
+   gpuLayerInputs = CUDAMemoryLoad[Flatten[layerInputs],"Float"];
+   gpuLayerOutputs = CUDAMemoryLoad[Flatten[layerOutputs],"Float"];
+   gpuPostLayerDeltaA = CUDAMemoryLoad[Flatten[postLayerDeltaA],"Float"];
+   gpuOutput = CUDAMemoryAllocate[ "Float", Length[layerInputs] * Length[layerInputs[[1]]] * Length[layerInputs[[1,1]]] * Length[layerInputs[[1,1,1]]] ];
+   GPUBackPropogateMaxConvolveFilterBankToFilterBankFn[ gpuLayerInputs, gpuLayerOutputs, gpuPostLayerDeltaA, gpuOutput, Length[layerInputs], Length[layerInputs[[1]]], Length[layerInputs[[1,1]]], Length[layerInputs[[1,1,1]]], { Length[layerInputs[[1,1]]],  Length[layerInputs[[1,1,1]]] } ];
+   res = unflatten[CUDAMemoryGet[gpuOutput], {Length[layerInputs], Length[layerInputs[[1]]],Length[layerInputs[[1,1]]],Length[layerInputs[[1,1,1]]]}];
+   CUDAMemoryUnload[gpuLayerInputs];CUDAMemoryUnload[gpuLayerOutputs];CUDAMemoryUnload[gpuPostLayerDeltaA];CUDAMemoryUnload[gpuOutput];
+   res); 
+CNGradLayer[ GPUMaxConvolveFilterBankToFilterBank,layerInputs_,layerOutputDelta_] :=
+   CNGradLayer[MaxConvolveFilterBankToFilterBank,layerInputs,layerOutputDelta];
+CNLayerWeightPlus[ GPUMaxConvolveFilterBankToFilterBank, grad_] := ReplacePart[CNLayerWeightPlus[MaxConvolveFilterBankToFilterBank,grad],0->GPUMaxConvolveFilterBankToFilterBank];
+
+
 CNConvertCPUToGPU[net_] := Map[CNConvertCPUToGPULayer,net];
 CNConvertCPUToGPULayer[ConvolveFilterBankToFilterBank[ filters_ ] ] := GPUConvolveFilterBankToFilterBank[ filters ];
 CNConvertCPUToGPULayer[Convolve2DToFilterBank[ filters_ ] ] := GPUConvolve2DToFilterBank[ filters ];
 CNConvertCPUToGPULayer[MaxPoolingFilterBankToFilterBank ] := GPUMaxPoolingFilterBankToFilterBank;
+CNConvertCPUToGPULayer[MaxConvolveFilterBankToFilterBank ] := GPUMaxConvolveFilterBankToFilterBank;
 CNConvertCPUToGPULayer[layer_] := layer;
