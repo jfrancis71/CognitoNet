@@ -110,8 +110,29 @@ __global__ void GPUBackPropogateMaxConvolveFilterBankToFilterBank( float* input,
          preLayerDeltaA[ ex*filters*height*width + f*height*width + y*width + x] = accum;
       }
 }
-      
 
+__global__ void GPUForwardPropogateMaxConvolveFilterBankToFilterBank( float* input, float* output, mint examples, mint filters, mint height, mint width )
+{
+   int x = threadIdx.x + blockIdx.x * blockDim.x;
+   int y = threadIdx.y + blockIdx.y * blockDim.y;
+
+   if ( x >= width ) return;
+   if ( y >= height ) return;
+
+   for ( int ex = 0 ; ex < examples ; ex++ )
+      for ( int f = 0 ; f < filters ; f++ )
+      {
+         float max  = input[ ex*filters*height*width + f*height*width + y*width + x ];
+
+         for ( int ty = -1 ; ty <= 1 ; ty++ )
+            for ( int tx = -1 ; tx <= 1 ; tx++ )
+               if ( y+ty >= 0 && y+ty < height && x+tx >=0 && x+tx < width &&
+                     input[ ex*filters*height*width + f*height*width + (y+ty)*width + x+tx ] > max )
+                  max = input[ ex*filters*height*width + f*height*width + (y+ty)*width + x+tx ];
+
+         output[ ex*filters*height*width + f*height*width + y*width + x ] = max;
+      }
+}
 
 __global__ void GPUConvolve2DToFilterBank( float* input, float* filterBanks, float* output, mint examples, mint filters, mint srcHeight, mint srcWidth, mint filterSize )
 {
@@ -160,6 +181,7 @@ CNGPUInitialize[]:=
    GPUConvolve2DToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUConvolve2DToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer,_Integer},{28,28}];
    GPUMaxPoolingFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUMaxPoolingFilterBankToFilterBank", {{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer},{28,28}];
    GPUBackPropogateMaxConvolveFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUBackPropogateMaxConvolveFilterBankToFilterBank", {{"Float","Input"},{"Float","Input"},{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer},{28,28}];
+   GPUForwardPropogateMaxConvolveFilterBankToFilterBankFn = CUDAFunctionLoad[GPUCode , "GPUForwardPropogateMaxConvolveFilterBankToFilterBank", {{"Float","Input"},{"Float",_,"Output"},_Integer,_Integer,_Integer,_Integer},{28,28}];
 )
 
 
@@ -254,8 +276,13 @@ CNGradLayer[ GPUMaxPoolingFilterBankToFilterBank,layerInputs_,layerOutputDelta_]
 CNLayerWeightPlus[ GPUMaxPoolingFilterBankToFilterBank, grad_] := ReplacePart[CNLayerWeightPlus[MaxPoolingFilterBankToFilterBank,grad],0->GPUMaxPoolingFilterBankToFilterBank];
 
 
-CNForwardPropogateLayer[GPUMaxConvolveFilterBankToFilterBank, inputs_] :=
-   CNForwardPropogateLayer[ MaxConvolveFilterBankToFilterBank, inputs ]
+CNForwardPropogateLayer[GPUMaxConvolveFilterBankToFilterBank, inputs_] := (
+   gpuinputs = CUDAMemoryLoad[Flatten[inputs],"Float"];
+   gpuOutput = CUDAMemoryAllocate[ "Float", Length[inputs] * Length[inputs[[1]]] * Length[inputs[[1,1]]] * Length[inputs[[1,1,1]]] ];
+   GPUForwardPropogateMaxConvolveFilterBankToFilterBankFn[ gpuinputs, gpuOutput, Length[inputs], Length[inputs[[1]]], Length[inputs[[1,1]]], Length[inputs[[1,1,1]]], { Length[inputs[[1,1]]],  Length[inputs[[1,1,1]]] } ];
+   res = unflatten[CUDAMemoryGet[gpuOutput], {Length[inputs], Length[inputs[[1]]],Length[inputs[[1,1]]],Length[inputs[[1,1,1]]]}];
+   CUDAMemoryUnload[gpuinputs];CUDAMemoryUnload[gpuOutput];
+   res); 
 CNBackPropogateLayer[ GPUMaxConvolveFilterBankToFilterBank,postLayerDeltaA_,layerInputs_, layerOutputs_] := (
    gpuLayerInputs = CUDAMemoryLoad[Flatten[layerInputs],"Float"];
    gpuLayerOutputs = CUDAMemoryLoad[Flatten[layerOutputs],"Float"];
