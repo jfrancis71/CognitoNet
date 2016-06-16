@@ -294,7 +294,7 @@ CNBackPropogateLayer[ GPUMaxConvolveFilterBankToFilterBank,postLayerDeltaA_,laye
    res); 
 CNGradLayer[ GPUMaxConvolveFilterBankToFilterBank,layerInputs_,layerOutputDelta_] :=
    CNGradLayer[MaxConvolveFilterBankToFilterBank,layerInputs,layerOutputDelta];
-CNLayerWeightPlus[ GPUMaxConvolveFilterBankToFilterBank, grad_] := ReplacePart[CNLayerWeightPlus[MaxConvolveFilterBankToFilterBank,grad],0->GPUMaxConvolveFilterBankToFilterBank];
+CNLayerWeightPlus[ GPUMaxConvolveFilterBankToFilterBank, grad_] := GPUMaxConvolveFilterBankToFilterBank;
 
 
 CNConvertCPUToGPU[net_] := Map[CNConvertCPUToGPULayer,net];
