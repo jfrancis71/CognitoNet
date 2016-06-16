@@ -347,7 +347,7 @@ SyntaxInformation[Max1D] = {"ArgumentsPattern"->{_}};
 CNForwardPropogateLayer[Max1D,inputs_] :=
    Map[Max,inputs];
 CNBackPropogateLayer[Max1D,postLayerDeltaA_,inputs_,outputs_]:=
-   Table[postLayerDeltaA[[ex]]*UnitStep[outputs-inputs],{ex,1,Length[postLayerDeltaA]}];
+   Table[postLayerDeltaA[[ex]]*UnitStep[outputs[[ex]]-inputs[[ex]]],{ex,1,Length[postLayerDeltaA]}];
 CNGradLayer[Max1D,layerInputs_,layerOutputDelta_]:={};
 CNLayerWeightPlus[Max1D,grad_]:=Max1D;
 CNLayerNumberParameters[Max1D] := 0;
