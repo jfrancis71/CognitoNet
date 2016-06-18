@@ -273,7 +273,7 @@ CNBackPropogateLayer[Adaptor2DTo1D[width_],postLayerDeltaA_,_,_]:=
    Map[Partition[#,width]&,postLayerDeltaA];
 CNGradLayer[Adaptor2DTo1D[width_],layerInputs_,layerOutputDelta_]:={}
 CNLayerWeightPlus[networkLayer_Adaptor2DTo1D,grad_]:=Adaptor2DTo1D[networkLayer[[1]]];
-CNLayerNumberParameters[Adaptor2DTo1D] := 0;
+CNLayerNumberParameters[Adaptor2DTo1D[_]] := 0;
 
 
 (*

@@ -233,6 +233,7 @@ CNBackPropogateLayer[ GPUConvolveFilterBankToFilterBank[filters_], postLayerDelt
 );
 CNGradLayer[ GPUConvolveFilterBankToFilterBank[filters_], layerInputs_, layerOutputDelta_] := CNGradLayer[ConvolveFilterBankToFilterBank[filters],layerInputs,layerOutputDelta];
 CNLayerWeightPlus[ GPUConvolveFilterBankToFilterBank[filters_], grad_] := ReplacePart[CNLayerWeightPlus[ConvolveFilterBankToFilterBank[filters],grad], 0->GPUConvolveFilterBankToFilterBank];
+CNLayerNumberParameters[ GPUConvolveFilterBankToFilterBank[filters_] ] := CNLayerNumberParameters[ ConvolveFilterBankToFilterBank[filters] ];
 
 
 CNForwardPropogateLayer[GPUConvolve2DToFilterBank[filters_],inputs_] := ( 
@@ -256,6 +257,7 @@ CNGradLayer[ GPUConvolve2DToFilterBank[filters_],layerInputs_,layerOutputDelta_]
    CNGradLayer[Convolve2DToFilterBank[filters],layerInputs,layerOutputDelta];
 CNLayerWeightPlus[GPUConvolve2DToFilterBank[filters_],grad_] :=
    ReplacePart[CNLayerWeightPlus[Convolve2DToFilterBank[filters],grad],0->GPUConvolve2DToFilterBank];
+CNLayerNumberParameters[GPUConvolve2DToFilterBank[filters_]] := CNLayerNumberParameters[Convolve2DToFilterBank[filters]]
 
 
 CNForwardPropogateLayer[GPUMaxPoolingFilterBankToFilterBank, inputs_] := (
@@ -295,6 +297,7 @@ CNBackPropogateLayer[ GPUMaxConvolveFilterBankToFilterBank,postLayerDeltaA_,laye
 CNGradLayer[ GPUMaxConvolveFilterBankToFilterBank,layerInputs_,layerOutputDelta_] :=
    CNGradLayer[MaxConvolveFilterBankToFilterBank,layerInputs,layerOutputDelta];
 CNLayerWeightPlus[ GPUMaxConvolveFilterBankToFilterBank, grad_] := GPUMaxConvolveFilterBankToFilterBank;
+CNLayerNumberParameters[ GPUMaxConvolveFilterBankToFilterBank ] := 0;
 
 
 CNConvertCPUToGPU[net_] := Map[CNConvertCPUToGPULayer,net];
