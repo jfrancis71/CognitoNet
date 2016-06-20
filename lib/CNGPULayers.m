@@ -306,3 +306,11 @@ CNConvertCPUToGPULayer[Convolve2DToFilterBank[ filters_ ] ] := GPUConvolve2DToFi
 CNConvertCPUToGPULayer[MaxPoolingFilterBankToFilterBank ] := GPUMaxPoolingFilterBankToFilterBank;
 CNConvertCPUToGPULayer[MaxConvolveFilterBankToFilterBank ] := GPUMaxConvolveFilterBankToFilterBank;
 CNConvertCPUToGPULayer[layer_] := layer;
+
+
+CNConvertGPUToCPU[net_] := Map[CNConvertGPUToCPULayer,net];
+CNConvertGPUToCPULayer[GPUConvolveFilterBankToFilterBank[ filters_ ] ] := ConvolveFilterBankToFilterBank[ filters ];
+CNConvertGPUToCPULayer[GPUConvolve2DToFilterBank[ filters_ ] ] := Convolve2DToFilterBank[ filters ];
+CNConvertGPUToCPULayer[GPUMaxPoolingFilterBankToFilterBank ] := MaxPoolingFilterBankToFilterBank;
+CNConvertGPUToCPULayer[GPUMaxConvolveFilterBankToFilterBank ] := MaxConvolveFilterBankToFilterBank;
+CNConvertGPUToCPULayer[layer_] := layer;
