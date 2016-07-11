@@ -11,6 +11,9 @@ Set noEntryBaseDir and checkpointDir to relevent directories, eg
 *)
 
 
+noEntryBaseDir = "C:\\Users\\julian\\ImageDataSets\\NoEntrySigns5";
+
+
 trainingPositives=Map[
    Function[fileName,
       Map[ImageTake[#,{71-32,71+31},{137-32,137+31}]&,CNImportMovie[fileName,256]]],
@@ -72,3 +75,88 @@ CNMiniBatchTrainModel[ CNConvertCPUToGPU[NoEntryNet], trainingSet,CNCrossEntropy
 
 
 
+
+
+(* Synthetic Code *)
+
+
+randReflect[image_]:=If[Random[]>.5,ImageReflect[image],image]
+
+
+transform[image_]:=
+randReflect[ImageResize[ImagePad[
+ImageRotate[image,(Random[]-.5)/10,{64,64}]
+,{{Random[]*4,Random[]*4},{Random[]*4,Random[]*4}}],{64,64}]]
+
+
+Length[trainingPositives//Flatten]
+
+
+16567
+
+
+Length[trainingNegatives//Flatten]
+
+
+22680
+
+
+Length[trainingNegatives//Flatten]
+
+
+93888
+
+
+Length[validationPositives//Flatten]
+
+
+2971
+
+
+Length[validationNegatives//Flatten]
+
+
+65128
+
+
+syntheticTrainingPositives=
+Map[transform,Flatten[Table[trainingPositives,{10}]]];
+
+
+syntheticTrainingNegatives=
+Map[transform,Flatten[Table[trainingNegatives,{10}]]];
+
+
+syntheticValidationPositives=
+Map[transform,Flatten[Table[validationPositives,{10}]]];
+
+
+syntheticValidationNegatives=
+Map[transform,Flatten[Table[validationNegatives,{10}]]];
+
+
+trainingSet=RandomSample[Join[
+   Map[#->1&,Flatten[syntheticTrainingPositives]],
+   Map[#->0&,Flatten[syntheticTrainingNegatives//RandomSample][[1;;Length[Flatten[syntheticTrainingPositives]]]]]
+]];
+
+
+validationSet=RandomSample[Join[
+   Map[#->1&,Flatten[syntheticValidationPositives]],
+   Map[#->0&,Flatten[syntheticValidationNegatives//RandomSample][[1;;Length[Flatten[syntheticValidationPositives]]]]]
+]];
+
+
+Length[trainingSet]
+
+
+331340
+
+
+Length[validationSet]
+
+
+59420
+
+
+(*Export["C:\\Users\\julian\\ImageDataSets\\NoEntrySigns5\\DataSetSynthetic.mx",{trainingSet,validationSet}];*)
