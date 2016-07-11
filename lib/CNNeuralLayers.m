@@ -387,7 +387,7 @@ SyntaxInformation[DropoutLayerMask]={"ArgumentsPattern"->{_}};
 Dropout[layer_,inputs_]:=layer;
 Dropout[net_List,inputs_]:=Map[Dropout[#,inputs]&,net];
 Dropout[DropoutLayer[dims_,dropoutProb_],inputs_]:=
-   DropoutLayerMask[Table[RandomInteger[],{Length[inputs]},dims]];
+   DropoutLayerMask[Array[(RandomInteger[])&,Prepend[dims,Length[inputs]]]];
 CNForwardPropogateLayer[DropoutLayer[_,_],inputs_]:=0.5*inputs;
 CNForwardPropogateLayer[DropoutLayerMask[mask_],inputs_]:=inputs*mask;
 CNBackPropogateLayer[DropoutLayerMask[mask_],postLayerDeltaA_,_,_]:=mask*postLayerDeltaA;
