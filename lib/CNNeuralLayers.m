@@ -391,6 +391,7 @@ Dropout[DropoutLayer[dims_,dropoutProb_],inputs_]:=
 CNForwardPropogateLayer[DropoutLayer[_,_],inputs_]:=0.5*inputs;
 CNForwardPropogateLayer[DropoutLayerMask[mask_],inputs_]:=inputs*mask;
 CNBackPropogateLayer[DropoutLayerMask[mask_],postLayerDeltaA_,_,_]:=mask*postLayerDeltaA;
+CNBackPropogateLayer[DropoutLayer[_,_],postLayerDeltaA_,_,_]:=0.5*postLayerDeltaA;
 CNGradLayer[DropoutLayerMask[mask_],layerInputs_,layerOutputDelta_]:={};
 CNGradLayer[DropoutLayer[_,_],layerInputs_,layerOutputDelta_]:={};
 CNLayerWeightPlus[networkLayer_DropoutLayer,grad_] :=
