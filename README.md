@@ -1,5 +1,7 @@
 # Welcome to CognitoNet.
 
+August 2016 Update: FYI Wolfram has just released version 11 of Mathematica which encompasses some of this functionality. Am still reviewing that, but you may also wish to look at the new neural network functionality they have introduced.
+
 CognitoNet is a Mathematica implementation of Convolutional Neural Nets.
 
 Objectives of the project are to make neural networks:
