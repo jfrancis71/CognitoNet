@@ -354,6 +354,19 @@ CNLayerNumberParameters[Max1D] := 0;
 
 
 (*
+   Layer: Mean1D
+*)
+SyntaxInformation[Mean1D] = {"ArgumentsPattern"->{_}};
+CNForwardPropogateLayer[Mean1D,inputs_] :=
+   Map[Mean,inputs];
+CNBackPropogateLayer[Mean1D,postLayerDeltaA_,inputs_,outputs_]:=
+   Table[postLayerDeltaA[[ex]]*(1/Length[inputs[[ex]]]),{ex,1,Length[postLayerDeltaA]},{n,1,Length[inputs[[ex]]]}];
+CNGradLayer[Mean1D,layerInputs_,layerOutputDelta_]:={};
+CNLayerWeightPlus[Mean1D,grad_]:=Mean1D;
+CNLayerNumberParameters[Mean1D] := 0;
+
+
+(*
    Layer: SubsampleFilterBankToFilterBank
 *)
 SyntaxInformation[SubsampleFilterBankToFilterBank] = {"ArgumentsPattern"->{}};
