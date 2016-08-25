@@ -289,7 +289,7 @@ CNLayerWeightPlus[ GPUMaxPoolingFilterBankToFilterBank, grad_] := ReplacePart[CN
 CNForwardPropogateLayer[GPUMaxConvolveFilterBankToFilterBank, inputs_] := (
    gpuinputs = CUDAMemoryLoad[Flatten[inputs],"Float"];
    gpuOutput = CUDAMemoryAllocate[ "Float", Length[inputs] * Length[inputs[[1]]] * Length[inputs[[1,1]]] * Length[inputs[[1,1,1]]] ];
-   GPUForwardPropogateMaxConvolveFilterBankToFilterBankFn[ gpuinputs, gpuOutput, Length[inputs], Length[inputs[[1]]], Length[inputs[[1,1]]], Length[inputs[[1,1,1]]], { Length[inputs[[1,1]]],  Length[inputs[[1,1,1]]] } ];
+   GPUForwardPropogateMaxConvolveFilterBankToFilterBankFn[ gpuinputs, gpuOutput, Length[inputs], Length[inputs[[1]]], Length[inputs[[1,1]]], Length[inputs[[1,1,1]]], { Length[inputs[[1,1,1]]],  Length[inputs[[1,1]]] } ];
    res = unflatten[CUDAMemoryGet[gpuOutput], {Length[inputs], Length[inputs[[1]]],Length[inputs[[1,1]]],Length[inputs[[1,1,1]]]}];
    CUDAMemoryUnload[gpuinputs];CUDAMemoryUnload[gpuOutput];
    res); 
