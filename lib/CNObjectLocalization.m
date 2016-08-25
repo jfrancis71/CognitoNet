@@ -37,7 +37,7 @@ CNObjectLocalizationConvolve[image_,net_, threshold_:0.0] := (
       map=CNPriorAdjustment[0.5,1/300., CNForwardPropogate[image,net]];
       extractPositions=Position[map,x_/;x>.5];,
       map=CNForwardPropogate[image,net];
-      extractPositions=Position[map,x_/;x>threshold];]
+      extractPositions=Position[map,x_/;x>threshold];];
 origCoords=Map[({#[[2]],#[[1]]}-{1,1})*4&,extractPositions];
 Map[CNOutlineGraphics[CNBoundingRectangles[{{16,-16}+{#[[1]],ImageDimensions[image][[2]]-#[[2]]}},{16,16}]]&,origCoords]
 )
