@@ -4,6 +4,9 @@
    Layer: FullyConnected1DToScalar
 *)
 SyntaxInformation[FullyConnected1DToScalar]={"ArgumentsPattern"->{_,_}};
+(* For below justification, see http://arxiv.org/pdf/1206.5533v2.pdf page 15
+   Yoshua Bengio Practical Recommendations for Gradient-Based Training of Deep Architectures
+*)
 FullyConnected1DToScalarInit[noFromNeurons_]:=
    FullyConnected1DToScalar[.0,Table[Random[]-.5,{noFromNeurons}]/Sqrt[noFromNeurons]]
 CNForwardPropogateLayer[FullyConnected1DToScalar[layerBias_,layerWeights_?VectorQ],
