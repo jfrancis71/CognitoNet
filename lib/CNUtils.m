@@ -149,3 +149,8 @@ CNGradientDescent[state_,gradF_,plusF_,iterations_,opts:OptionsPattern[]] :=
       {state,gradF[state]*0.0}, (* needed as if velocity has complex structure it will be
                                    otherwise initialized incorrectly *)
       iterations]]
+
+
+CNHeatMap[matrix_] := ArrayPlot[matrix, 
+   ColorFunction -> (Blend[{Blue, Black, Red}, (# + 1)/2] &), 
+   ColorFunctionScaling -> False]
