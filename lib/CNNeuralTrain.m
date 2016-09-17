@@ -6,11 +6,13 @@
 SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{_}};
 SyntaxInformation[LearningRate]={"ArgumentsPattern"->{_}};
 SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
+SyntaxInformation[L2W]={"ArgumentsPattern"->{_}};
 CNDefaultTrainingOptions={
    MaxEpoch->1000,
    LearningRate->.01,
    Momentum->.0,
    MomentumType->"None",
+   L2W->0.0,
    EpochMonitor:>Function[{},0],
    ValidationSet->{}};
 
@@ -173,7 +175,7 @@ opts:OptionsPattern[] ] := (
    { state, vel } = { network, velocity };
    Scan[
       Function[batch,{state,vel} = CNStepGradientDescent[{state, vel},
-         CNGrad[ #, batch[[All,1]],batch[[All,2]], lossF ]&,
+         (CNRegularize[ #, CNGrad[ #, batch[[All,1]],batch[[All,2]], lossF ], opts ])&,
          CNLayerWeightPlus,OptionValue[Momentum],OptionValue[MomentumType],
             OptionValue[LearningRate]];
       partialTrainingLoss = lossF[ state, batch];],
@@ -181,6 +183,10 @@ opts:OptionsPattern[] ] := (
    ];
    { state, vel }
 );
+
+
+Options[CNRegularizeLayer] = Options[CNMiniBatchTrainModel];
+CNRegularize[ net_, gradient_, opts_ ] := (MapThread[ CNRegularizeLayer[ #1, #2, opts ]&, { net, gradient } ] );
 
 
 Options[CNMiniBatchTrainModelInternal] = Options[CNMiniBatchTrainModel];
