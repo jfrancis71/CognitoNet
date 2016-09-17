@@ -59,8 +59,11 @@ CNForwardPropogate::usage=
 network
 CNForwardPropogate[image,network] runs forward propogation on the image through the network.
 CNForwardPropogate[images,network] runs forward propogation on the images through the network.";
-CNForwardPropogate[inputs_,network_]:=
-   Flatten[Map[CNForwardPropogateInternal[#,network]&,Partition[inputs,100,100,1,{}]],1];
+CNForwardPropogate[inputs_,network_]:= (
+   CNFDPpg=Partition[inputs,100,100,1,{}]; (* No idea why I can't embed this function directly into
+      function below (so no need for local var) but without this Partition will fail non deterministically
+      usually within a few thousand calls. Appears to be new behaviour in Mathematica version 11 *)
+   Flatten[Map[CNForwardPropogateInternal[#,network]&,CNFDPpg],1])
 
 
 CNForwardPropogate[images_?(CNImageListQ[#]||CNColImageListQ[#]&),network_] :=
