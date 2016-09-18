@@ -422,12 +422,12 @@ CNLayerDescription[layer_Symbol]:=ToString[layer];
 CNLayerDescription[layer_]:=ToString[Head[layer]];
 
 
-CNRegularizeLayer[ Convolve2D[ _, _ ], { bias_, kernel_ }, opts:OptionsPattern[] ] := { bias, kernel + 2.*kernel*OptionValue[ L2W ] };
+CNRegularizeLayer[ Convolve2D[ _, _ ], { bias_, kernel_ }, opts:OptionsPattern[] ] := { bias, kernel + 2.*kernel*OptionValue[ L2W ] + Sign[kernel] *OptionValue[L1W] };
 CNRegularizeLayer[ Convolve2DToFilterBank[ filters_ ], grads_, opts:OptionsPattern[] ] := MapThread[ CNRegularizeLayer[ #1, #2, opts  ]&, { filters, grads }];
-CNRegularizeLayer[ ConvolveFilterBankTo2D[ _ ], { bias_, kernel_ }, opts:OptionsPattern[] ] := (Print[OptionValue[ L2W ] ];{ bias, kernel + 2.*kernel*OptionValue[ L2W ] });
+CNRegularizeLayer[ ConvolveFilterBankTo2D[ _ ], { bias_, kernel_ }, opts:OptionsPattern[] ] := (Print[OptionValue[ L2W ] ];{ bias, kernel + 2.*kernel*OptionValue[ L2W ]  + Sign[kernel] *OptionValue[L1W] });
 CNRegularizeLayer[ ConvolveFilterBankToFilterBank[ filters_ ], grads_, opts:OptionsPattern[] ] := (Print["H"];MapThread[ CNRegularizeLayer[ #1, #2, opts  ]&, { filters, grads } ]);
 
-CNRegularizeLayer[ GPUConvolve2D[ _, _ ], { bias_, kernel_ }, opts:OptionsPattern[] ] := { bias, kernel + 2.*kernel*OptionValue[ L2W ] };
+CNRegularizeLayer[ GPUConvolve2D[ _, _ ], { bias_, kernel_ }, opts:OptionsPattern[] ] := { bias, kernel + 2.*kernel*OptionValue[ L2W ]  + Sign[kernel] *OptionValue[L1W] };
 CNRegularizeLayer[ GPUConvolve2DToFilterBank[ filters_ ], grads_, opts:OptionsPattern[] ] := MapThread[ CNRegularizeLayer[ #1, #2, opts  ]&, { filters, grads } ];
 CNRegularizeLayer[ GPUConvolveFilterBankTo2D[ _ ], { bias_, kernel_ }, opts:OptionsPattern[] ] := (Print[OptionValue[ L2W ] ];{ bias, kernel + 2.*kernel*OptionValue[ L2W ] });
 CNRegularizeLayer[ GPUConvolveFilterBankToFilterBank[ filters_ ], grads_, opts:OptionsPattern[] ] := (MapThread[ CNRegularizeLayer[ #1, #2, opts  ]&, { filters, grads } ]);

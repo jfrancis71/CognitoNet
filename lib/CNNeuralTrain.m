@@ -3,16 +3,23 @@
 (* Training Logic *)
 
 
+(*
+   Extensive discussion on L1W and L2W regularisation see http://arxiv.org/pdf/1206.5533v2.pdf page 12
+   Yoshua Bengio Practical Recommendations for Gradient-Based Training of Deep Architectures
+*)
+
+
 SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{_}};
 SyntaxInformation[LearningRate]={"ArgumentsPattern"->{_}};
 SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
 SyntaxInformation[L2W]={"ArgumentsPattern"->{_}};
+SyntaxInformation[L1W]={"ArgumentsPattern"->{_}};
 CNDefaultTrainingOptions={
    MaxEpoch->1000,
    LearningRate->.01,
    Momentum->.0,
    MomentumType->"None",
-   L2W->0.0,
+   L2W->0.0,L1W->0.0,
    EpochMonitor:>Function[{},0],
    ValidationSet->{}};
 
