@@ -201,7 +201,7 @@ CNLayerNumberParameters[Tanh] := 0;
 SyntaxInformation[ReLU]={"ArgumentsPattern"->{}};
 CNForwardPropogateLayer[ReLU,inputs_]:=UnitStep[inputs-0]*inputs;
 CNBackPropogateLayer[ReLU,postLayerDeltaA_,inputs_,_]:=
-   postLayerDeltaA*UnitStep[inputs-0];
+   postLayerDeltaA*Boole[Positive[inputs]];
 CNGradLayer[ReLU,layerInputs_,layerOutputDelta_]:={};
 CNLayerWeightPlus[ReLU,grad_]:=ReLU;
 
@@ -402,8 +402,8 @@ SyntaxInformation[DropoutLayer]={"ArgumentsPattern"->{_,_}};
 SyntaxInformation[DropoutLayerMask]={"ArgumentsPattern"->{_}};
 Dropout[layer_,inputs_]:=layer;
 Dropout[net_List,inputs_]:=Map[Dropout[#,inputs]&,net];
-Dropout[DropoutLayer[dims_,dropoutProb_],inputs_]:=
-   DropoutLayerMask[Array[(RandomInteger[])&,Prepend[dims,Length[inputs]]]];
+Dropout[DropoutLayer[dims_,dropoutProb_],inputs_]:=(Print[dims];
+   DropoutLayerMask[Array[(RandomInteger[])&,Prepend[dims,Length[inputs]]]]);
 CNForwardPropogateLayer[DropoutLayer[_,_],inputs_]:=0.5*inputs;
 CNForwardPropogateLayer[DropoutLayerMask[mask_],inputs_]:=inputs*mask;
 CNBackPropogateLayer[DropoutLayerMask[mask_],postLayerDeltaA_,_,_]:=mask*postLayerDeltaA;
