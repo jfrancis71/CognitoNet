@@ -33,4 +33,4 @@ Example neural nets include:
 
  - "No Entry" Sign Localization
 
-   YouTube Video Demonstration: <https://www.youtube.com/watch?v=fz5h-RDwTTs> 
+   YouTube Video Demonstration: https://www.youtube.com/watch?v=LCgRAmG56Uo 
