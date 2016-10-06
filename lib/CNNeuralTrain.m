@@ -9,11 +9,20 @@
 *)
 
 
+CNAddGaussianNoise[trainingSet_,noiseScale_] := 
+   Map[
+      Function[
+         trainingItem,
+         trainingItem[[1]] + RandomVariate[NormalDistribution[0,noiseScale],Length[trainingItem[[1]]]]->trainingItem[[2]]],
+      trainingSet];
+
+
 SyntaxInformation[MaxEpoch]={"ArgumentsPattern"->{_}};
 SyntaxInformation[LearningRate]={"ArgumentsPattern"->{_}};
 SyntaxInformation[EpochMonitor]={"ArgumentsPattern"->{_}};
 SyntaxInformation[L2W]={"ArgumentsPattern"->{_}};
 SyntaxInformation[L1W]={"ArgumentsPattern"->{_}};
+SyntaxInformation[PreprocessTrainingSet]={"ArgumentsPattern"->{_}};
 CNDefaultTrainingOptions={
    MaxEpoch->1000,
    LearningRate->.01,
@@ -21,6 +30,7 @@ CNDefaultTrainingOptions={
    MomentumType->"None",
    L2W->0.0,L1W->0.0,
    EpochMonitor:>Function[{},0],
+   PreprocessTrainingSet->Function[inputs,inputs],
    ValidationSet->{}};
 
 
@@ -211,7 +221,7 @@ CNMiniBatchTrainModelInternal[model_,trainingSet_,lossF_,opts:OptionsPattern[]] 
             CNRegressionLoss1D ]*0.0 };
       For[epoch=1,epoch<OptionValue[MaxEpoch],epoch++,
          { state, velocity } =
-            CNMiniBatchTrainForOneEpoch[ {state, velocity}, trainingSet, lossF,
+            CNMiniBatchTrainForOneEpoch[ {state, velocity}, OptionValue[ PreprocessTrainingSet ][trainingSet], lossF,
                FilterRules[{opts},Options[CNMiniBatchTrainForOneEpoch]] ];
          CurrentModel = state;
          AppendTo[TrainingHistory,lossF[ state, trainingSet ] ];
