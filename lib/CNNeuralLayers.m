@@ -415,6 +415,20 @@ CNLayerWeightPlus[networkLayer_DropoutLayer,grad_] :=
 CNLayerNumberParameters[DropoutLayer[_,_]] := 0;
 
 
+CNForwardPropogateLayer[DecorrelationRegularizer, inputs_List] :=  inputs;
+CNBackPropogateLayer[DecorrelationRegularizer,postLayerDeltaA_,layerInputs_,_] := (
+   If[Length[layerInputs]==1,postLayerDeltaA,
+      CNCovar= Covariance[layerInputs];
+      CNMn = Mean[layerInputs];
+      CNI=Map[(#-CNMn)&,layerInputs];
+      postLayerDeltaA + (bt=1*(1/Length[postLayerDeltaA])*Table[CNCovar[[a]].ReplacePart[CNI[[m]],a->0.],{m,1,Length[postLayerDeltaA]},{a,1,4096}])] )
+CNGradLayer[DecorrelationRegularizer,layerInputs_,layerOutputDelta_] :=
+   {};
+CNLayerWeightPlus[DecorrelationRegularizer,grad_] :=
+    DecorrelationRegularizer ;
+CNLayerNumberParameters[DecorrelationRegularizer] := 0
+
+
 (*
    Default Description
 *)
