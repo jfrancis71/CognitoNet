@@ -398,21 +398,21 @@ CNLayerNumberParameters[PadFilter[padding_]] := 0;
 (*
    Ref: https://www.cs.toronto.edu/~hinton/absps/JMLRdropout.pdf
 *)
-SyntaxInformation[DropoutLayer]={"ArgumentsPattern"->{_,_}};
+SyntaxInformation[CNDropoutLayer]={"ArgumentsPattern"->{_,_}};
 SyntaxInformation[DropoutLayerMask]={"ArgumentsPattern"->{_}};
 Dropout[layer_,inputs_]:=layer;
 Dropout[net_List,inputs_]:=Map[Dropout[#,inputs]&,net];
-Dropout[DropoutLayer[dims_,dropoutProb_],inputs_]:=(Print[dims];
+Dropout[CNDropoutLayer[dims_,dropoutProb_],inputs_]:=(
    DropoutLayerMask[Array[(RandomInteger[])&,Prepend[dims,Length[inputs]]]]);
-CNForwardPropogateLayer[DropoutLayer[_,_],inputs_]:=0.5*inputs;
+CNForwardPropogateLayer[CNDropoutLayer[_,_],inputs_]:=0.5*inputs;
 CNForwardPropogateLayer[DropoutLayerMask[mask_],inputs_]:=inputs*mask;
 CNBackPropogateLayer[DropoutLayerMask[mask_],postLayerDeltaA_,_,_]:=mask*postLayerDeltaA;
-CNBackPropogateLayer[DropoutLayer[_,_],postLayerDeltaA_,_,_]:=0.5*postLayerDeltaA;
+CNBackPropogateLayer[CNDropoutLayer[_,_],postLayerDeltaA_,_,_]:=0.5*postLayerDeltaA;
 CNGradLayer[DropoutLayerMask[mask_],layerInputs_,layerOutputDelta_]:={};
-CNGradLayer[DropoutLayer[_,_],layerInputs_,layerOutputDelta_]:={};
-CNLayerWeightPlus[networkLayer_DropoutLayer,grad_] :=
-   DropoutLayer[networkLayer[[1]],networkLayer[[2]]];
-CNLayerNumberParameters[DropoutLayer[_,_]] := 0;
+CNGradLayer[CNDropoutLayer[_,_],layerInputs_,layerOutputDelta_]:={};
+CNLayerWeightPlus[networkLayer_CNDropoutLayer,grad_] :=
+   CNDropoutLayer[networkLayer[[1]],networkLayer[[2]]];
+CNLayerNumberParameters[CNDropoutLayer[_,_]] := 0;
 
 
 CNForwardPropogateLayer[DecorrelationRegularizer, inputs_List] :=  inputs;
