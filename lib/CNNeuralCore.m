@@ -145,10 +145,12 @@ CNRegressionLoss1D[model_,testSet_] := (
    CNAssertAbort[Dimensions[outputs]==Dimensions[testSet[[All,2]]],
       "Loss1D::Mismatched Targets and Outputs"];
    Total[(outputs-testSet[[All,2]])^2,2]/Length[testSet]);
-CNCrossEntropyLoss[model_,testSet_]:=
+CNCrossEntropyLossExamples[model_,testSet_] :=
    Module[{output=CNForwardPropogate[testSet[[All,1]],model]},
-      -Total[testSet[[All,2]]*Log[output]+
-         (1-testSet[[All,2]])*Log[1-output],2]/Length[testSet]];
+      -(testSet[[All,2]]*Log[output]+
+         (1-testSet[[All,2]])*Log[1-output])];
+CNCrossEntropyLoss[model_,testSet_] :=
+   Total[ CNCrossEntropyLossExamples[model,testSet] ]/Length[testSet];
 CNCategoricalLoss::usage = 
    "CNCategoricalLoss[ parameters, testSet ] Note that no label maps are passed in,
 so testSet must be in 1 of K format.";
