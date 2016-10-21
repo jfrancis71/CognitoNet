@@ -213,10 +213,16 @@ SyntaxInformation[MaxPoolingFilterBankToFilterBank]={"ArgumentsPattern"->{}};
 CNForwardPropogateLayer[MaxPoolingFilterBankToFilterBank,inputs_] :=
    Map[Function[image,Map[Max,Partition[image,{2,2}],{2}]],inputs,{2}];
 UpSample[x_]:=Riffle[temp=Riffle[x,x]//Transpose;temp,temp]//Transpose;
-backRouting[previousZ_,nextA_]:=UnitStep[previousZ-Map[UpSample,nextA,{2}]];
+backRoutingSingleMax[ backRoute_ ] := (* Takes a 2D slice of back routes and makes sure there is only one max back (like TensorFlow) *)
+   Boole[Positive[ArrayFlatten[
+      Map[(
+         {{#[[1,1]],#[[1,2]]-#[[1,1]]},{#[[2,1]]-(#[[1,1]]+#[[1,2]]),#[[2,2]]-(#[[1,1]]+#[[1,2]]+#[[2,1]])}}
+         )&,Partition[backRoute,{2,2}],{2}]]]];
+backRouting[previousZ_,nextA_] := 
+   Map[backRoutingSingleMax,UnitStep[previousZ-Map[UpSample,nextA,{2}]],{2}];
 CNBackPropogateLayer[MaxPoolingFilterBankToFilterBank,postLayerDeltaA_,layerInputs_,
 layerOutputs_]:=
-   backRouting[layerInputs,layerOutputs]*Map[UpSample,postLayerDeltaA,{2}];
+   ( backRouting[layerInputs,layerOutputs]*Map[UpSample,postLayerDeltaA,{2}] )
 CNGradLayer[MaxPoolingFilterBankToFilterBank,layerInputs_,layerOutputDelta_]:={};
 CNLayerWeightPlus[MaxPoolingFilterBankToFilterBank,grad_] :=
    MaxPoolingFilterBankToFilterBank;
