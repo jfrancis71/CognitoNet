@@ -19,7 +19,7 @@ ReadImagesFromMNISTFile[file_String] := Module[{
    RawImageStream=RawImageFileData[[17;;-1]];
    RawImages=Partition[RawImageStream,28*28];
 
-   Map[Reverse,Map[If[#1 > 128, 1., 0.] &,Map[Partition[#,28]&,RawImages],{3}]]
+   Map[Reverse,Map[(#) &,Map[Partition[#,28]&,RawImages],{3}]]
 ];
 
 ReadMINSTLabelFile[file_String] := Module[
