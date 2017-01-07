@@ -32,20 +32,32 @@ CNPriorAdjustment[trainingPrior_?NumberQ,testPrior_?NumberQ,trainingPosterior_] 
 ];
 
 
-CNObjectLocalizationConvolve[image_,net_, threshold_:0.0] := (
-   If[threshold==0.0,
+CNGetPatch[image_,coords_] := (AppendTo[patches,Image[ImageData[image][[coords[[2]]-16;;coords[[2]]+15,coords[[1]]-16;;coords[[1]]+15]]]];Last[patches])
+
+
+patches={};
+
+
+SyntaxInformation[ColorStyleF]={"ArgumentsPattern"->{_}};
+Options[ CNObjectLocalizationConvolve ] = {
+   Threshold->0.0,
+   ColorStyleF->Function[{patch},Green]
+};
+CNObjectLocalizationConvolve[image_,net_,opts:OptionsPattern[]] := (
+   If[OptionValue[Threshold]==0.0,
       map=CNPriorAdjustment[0.5,1/300., CNForwardPropogate[image,net]];
       extractPositions=Position[map,x_/;x>.5];,
       map=CNForwardPropogate[image,net];
-      extractPositions=Position[map,x_/;x>threshold];];
+      extractPositions=Position[map,x_/;x>OptionValue[Threshold]];];
 origCoords=Map[({#[[2]],#[[1]]}-{1,1})*4&,extractPositions];
-Map[CNOutlineGraphics[CNBoundingRectangles[{{16,-16}+{#[[1]],ImageDimensions[image][[2]]-#[[2]]}},{16,16}]]&,origCoords]
+Map[CNOutlineGraphics[CNBoundingRectangles[{{16,-16}+{#[[1]],ImageDimensions[image][[2]]-#[[2]]}},{16,16}],OptionValue[ColorStyleF][CNGetPatch[image,{16,16}+{#[[1]],#[[2]]}]]]&,origCoords]
 )
 
 
-CNObjectLocalization[image_?CNImageQ,net_,threshold_:0.0] := ( 
+Options[ CNObjectLocalization ] = Options[ CNObjectLocalizationConvolve ];
+CNObjectLocalization[image_?CNImageQ,net_,opts:OptionsPattern[]] := ( 
    Show[image,
-      Table[CNRescaleGraphics[CNObjectLocalizationConvolve[#,net,threshold]&,image,.8^sc],{sc,0,-3+(Log[32]-Log[Min[ImageDimensions[image]]])/Log[.8]}]
+      Table[CNRescaleGraphics[CNObjectLocalizationConvolve[#,net,opts]&,image,.8^sc],{sc,0,-3+(Log[32]-Log[Min[ImageDimensions[image]]])/Log[.8]}]
    (* Slight hack with -3 factor above. Ideally fixup CNFaceLocalizationConvolve so it can handle 32*32 inputs *)
    ]
 );

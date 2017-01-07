@@ -3,7 +3,10 @@
 <<CNNeuralCore.m
 
 
-FaceNet = CNReadModel["FaceNet\\FaceDetectionNet1"];
+<<CNObjectLocalization.m
+
+
+FaceNet = CNReadModel["FaceNet\\FaceNet2Convolve"];
 GenderNet = CNReadModel["FaceNet\\GenderDetectionNet1"];
 
 
@@ -32,9 +35,6 @@ CNFaceWithGenderDetection::usage = "CNFaceWithGenderDetection[mirror,spaces] per
 but adds an attempt to determine gender which is displayed using the color of the bounding boxes.";
 CNFaceWithGenderDetection[mirror_,spaces_] :=
    CNFaceDetection[mirror,spaces,Function[image,Blend[{Pink,Blue},CNForwardPropogate[{image},GenderNet][[1]]]]]
-
-
-CNGetPatch[image_,coords_] := Image[ImageData[image][[coords[[2]]-16;;coords[[2]]+15,coords[[1]]-16;;coords[[1]]+15]]]
 
 
 (*
@@ -73,38 +73,11 @@ CNFaceLocalization[image_?CNImageQ,colorStyleF_:Function[{patch},Green]] := (
 );
 
 
+CNFaceLocalization[image_?CNImageQ,colorStyleF_:Function[{patch},Green]] :=
+   CNObjectLocalization[ image, FaceNet, {Threshold->.997, ColorStyleF->colorStyleF} ]
+(* Note Solve[ CNPriorAdjustment[ 0.5, 1./301,x]\[Equal]0.5,x] gives approx .997 *)
+
+
 CNFaceWithGenderLocalization::usage = "CNFaceWithGenderLocalization[cnimage] searches for faces at multipe scales within the image and attempts gender recognition.";
 CNFaceWithGenderLocalization[image_?CNImageQ] :=
    CNFaceLocalization[image,Function[{patch},Blend[{Pink,Blue},CNForwardPropogate[patch,GenderNet]]]]
-
-
-(*
-   The ratio version of Bayes Theorem is most useful here:
-      PosteriorRatio = PriorRatio * LikelihoodRatio
-
-      priorRatio = prior/(1-prior) etc
-
-   Basic idea is that the trained neural network is a discriminative network, therefore it has
-   both a prior and likelihood probabilities baked into its output. This is fine if population frequency
-   between training and test is the same, but if they change it will be systematically wrong.
-   If we know the neural network probability output and we knew the frequency of positives in the training set
-   we can back out and calculate the likelihood ratio.
-   We can then use this likelihood ratio with our estimation of the test frequency of positives to calculate a new
-   conditional probability that is more appropriate to our current test set.
-
-   Example, the face database was trained with about 50% faces and 50% distractors. But this is not appropriate
-   for our localization functions where we expect only a small fraction of windows to actually contain faces.
-
-*)
-CNPriorAdjustment::usage = "CNPriorAdjustment[oldPrior,newPrior,probabilities]
-Adjusts neural network output probabilities if the frequency of matches in the
-training scenario is different from the test scenario. probability can be a
-scalar or any numeric array representing the conditional probability to be adjusted.";
-CNPriorAdjustment[trainingPrior_?NumberQ,testPrior_?NumberQ,trainingPosterior_] := Module[{},
-   trainingPriorRatio = trainingPrior/(1-trainingPrior);
-   trainingPosteriorRatio = trainingPosterior/(1-trainingPosterior);
-   likelihoodRatio = trainingPosteriorRatio/trainingPriorRatio;
-   testPriorRatio = testPrior/(1-testPrior);
-   testPosteriorRatio = testPriorRatio * likelihoodRatio;
-   testPosterior = testPosteriorRatio/(1+testPosteriorRatio)
-];
