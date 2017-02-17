@@ -1,6 +1,10 @@
 # Welcome to CognitoNet.
 
-*August 2016 Update: FYI Wolfram has just released version 11 of Mathematica which encompasses some of this project's functionality. Am still reviewing that, but you may also wish to look at the new neural network functionality they have introduced.*
+*
+17/02/2017 Update:
+This project is no longer in active development. The project has been a lot of fun to develop, but the world has now moved on. For serious machine learning I would suggest the new machine learning tools in Mathematica v11, which I believe is based on CAFFE, a well respected deep learning library. I am using TensorFlow in Python which I am having good experiences with. I am also recommending for people seriously interested in machine learning to be multilingual and use several tools. The downside is the overhead in learning other languages and tools. However many research papers leave many technical details unspecified and where they publish a working reference model this can be invaluable in clarifying these details (and debugging).
+
+*To migrate models from CognitoNet to other systems I have found a useful strategy is to respecify the model in the new framework, and use the JSON file format to transfer weights from the CognitoNet model to the new framework.
 
 CognitoNet is a Mathematica implementation of Convolutional Neural Nets.
 
