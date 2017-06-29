@@ -21,7 +21,13 @@ CNGPUInitialize[]
 source=Join[{1,1,1,1,1},ConstantArray[0,495]];
 
 
-codebook=Table[RandomSample[source],{y,1,53},{x,1,73}];
+(* Rather fun codebook
+   Different from above in that codes which are quite close have quite
+   high inner products.
+*)
+rcodebook=UnitStep[Table[
+Sum[codebook[[i]],{i,Max[1,s-5],Min[1000,s+5]}]
+,{s,1,1000}]-.01];
 
 
 MyMaxDetect[image_]:=If[Total[image//ImageData,2]==0,0*(image//ImageData),MaxDetect[image]//ImageData]
