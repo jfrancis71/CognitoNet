@@ -21,3 +21,7 @@ CNConvertToTFConvolveFilterBankToFilterBankWeights[layer_]:=
 
 CNConvertToTFConvolveFilterBankTo2DWeights[layer_]:=
    {layer[[1]],Transpose[{layer[[2]]},{4,3,1,2}]}
+
+
+CNConvertToTFFullyConnected1DToScalarWeights[layer_] :=
+   {layer[[1]], Transpose[{layer[[2]]}]}
