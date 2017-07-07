@@ -21,12 +21,18 @@ CNGPUInitialize[]
 source=Join[{1,1,1,1,1},ConstantArray[0,495]];
 
 
+codebook=Table[RandomSample[source],{y,1,53},{x,1,73}];
+
+
+codebook1=Table[RandomSample[source],{y,1,1000}];
+
+
 (* Rather fun codebook
    Different from above in that codes which are quite close have quite
    high inner products.
 *)
 rcodebook=UnitStep[Table[
-Sum[codebook[[i]],{i,Max[1,s-5],Min[1000,s+5]}]
+Sum[codebook1[[i]],{i,Max[1,s-5],Min[1000,s+5]}]
 ,{s,1,1000}]-.01];
 
 
